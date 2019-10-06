@@ -6,6 +6,8 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:video_player/video_player.dart';
 
+typedef FTCallBack(VideoPlayerController controller);
+
 class FluTube extends StatefulWidget {
   /// Youtube video URL(s)
   var _videourls;
@@ -64,6 +66,7 @@ class FluTube extends StatefulWidget {
   /// Video end
   final VoidCallback onVideoEnd;
 
+  FTCallBack callBackController;
   FluTube(
     @required String videourl, {
     Key key,
@@ -83,6 +86,7 @@ class FluTube extends StatefulWidget {
     this.systemOverlaysAfterFullscreen,
     this.onVideoStart,
     this.onVideoEnd,
+    this.callBackController
   }) : super(key: key) {
     this._videourls = videourl;
   }
@@ -106,6 +110,7 @@ class FluTube extends StatefulWidget {
     this.systemOverlaysAfterFullscreen,
     this.onVideoStart,
     this.onVideoEnd,
+    this.callBackController
   }) : super(key: key) {
     assert(playlist.length > 0, 'Playlist should not be empty!');
     this._videourls = playlist;
@@ -128,6 +133,9 @@ class FluTubeState extends State<FluTube>{
   @override
   initState() {
     super.initState();
+    if (videoController != null) videoController.dispose();
+    if (chewieController != null) chewieController.dispose();
+
     _needsShowThumb = !widget.autoPlay;
     if(_isPlaylist) {
       _initialize((widget._videourls as List<String>)[0]); // Play the very first video of the playlist
@@ -165,6 +173,7 @@ class FluTubeState extends State<FluTube>{
           allowedScreenSleep: widget.allowScreenSleep,
           allowMuting: widget.allowMuting
       );
+      widget.callBackController(videoController);
     });
   }
 
@@ -172,13 +181,14 @@ class FluTubeState extends State<FluTube>{
     if(isPlaying != videoController.value.isPlaying){
       setState(() {
         isPlaying = videoController.value.isPlaying;
+        widget.callBackController(videoController);
       });
     }
   }
 
   _startListener() {
     if(videoController.value.initialized && isPlaying)
-      widget.onVideoStart();
+      {widget.onVideoStart();widget.callBackController(videoController);}
   }
 
   _endListener() {
@@ -206,6 +216,7 @@ class FluTubeState extends State<FluTube>{
               }
             }
           }
+          widget.callBackController(videoController);
         }
       }
     }
@@ -226,6 +237,7 @@ class FluTubeState extends State<FluTube>{
     print('FLAG');
     _initialize((widget._videourls as List<String>)[_currentlyPlaying]);
     chewieController.play();
+    widget.callBackController(videoController);
   }
 
   _playlistLoop() {
@@ -237,12 +249,14 @@ class FluTubeState extends State<FluTube>{
     videoController = null;
     _initialize((widget._videourls as List<String>)[0]);
     chewieController.play();
+    widget.callBackController(videoController);
   }
 
   @override
   void dispose() {
     if (videoController != null) videoController.dispose();
     if (chewieController != null) chewieController.dispose();
+    widget.callBackController(videoController);
     super.dispose();
   }
 
