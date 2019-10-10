@@ -67,6 +67,8 @@ class FluTube extends StatefulWidget {
   /// Video end
   final VoidCallback onVideoEnd;
 
+  final Widget customControl;
+
   FTCallBack callBackController;
   FluTube(
     @required String videourl, {
@@ -88,7 +90,8 @@ class FluTube extends StatefulWidget {
     this.onVideoStart,
     this.onVideoEnd,
     this.callBackController,
-    this.subVideo
+    this.subVideo,
+    this.customControl
   }) : super(key: key) {
     this._videourls = videourl;
   }
@@ -113,7 +116,8 @@ class FluTube extends StatefulWidget {
     this.onVideoStart,
     this.onVideoEnd,
     this.callBackController,
-    this.subVideo
+    this.subVideo,
+    this.customControl
   }) : super(key: key) {
     assert(playlist.length > 0, 'Playlist should not be empty!');
     this._videourls = playlist;
@@ -175,6 +179,7 @@ class FluTubeState extends State<FluTube>{
           systemOverlaysAfterFullScreen: widget.systemOverlaysAfterFullscreen,
           allowedScreenSleep: widget.allowScreenSleep,
           allowMuting: widget.allowMuting,
+          customControls: widget.customControl
       );
       widget.callBackController(videoController);
     });
