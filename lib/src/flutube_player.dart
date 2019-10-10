@@ -58,6 +58,7 @@ class FluTube extends StatefulWidget {
   /// Whether or not to show the video thumbnail when the video did not start playing.
   final bool showThumb;
 
+  final Widget subVideo;
   /// Video events
 
   /// Video start
@@ -86,7 +87,8 @@ class FluTube extends StatefulWidget {
     this.systemOverlaysAfterFullscreen,
     this.onVideoStart,
     this.onVideoEnd,
-    this.callBackController
+    this.callBackController,
+    this.subVideo
   }) : super(key: key) {
     this._videourls = videourl;
   }
@@ -110,7 +112,8 @@ class FluTube extends StatefulWidget {
     this.systemOverlaysAfterFullscreen,
     this.onVideoStart,
     this.onVideoEnd,
-    this.callBackController
+    this.callBackController,
+    this.subVideo
   }) : super(key: key) {
     assert(playlist.length > 0, 'Playlist should not be empty!');
     this._videourls = playlist;
@@ -171,7 +174,7 @@ class FluTubeState extends State<FluTube>{
           deviceOrientationsAfterFullScreen: widget.deviceOrientationAfterFullscreen,
           systemOverlaysAfterFullScreen: widget.systemOverlaysAfterFullscreen,
           allowedScreenSleep: widget.allowScreenSleep,
-          allowMuting: widget.allowMuting
+          allowMuting: widget.allowMuting,
       );
       widget.callBackController(videoController);
     });
@@ -305,6 +308,7 @@ class FluTubeState extends State<FluTube>{
       return chewieController != null ? Chewie(
         key: widget.key,
         controller: chewieController,
+        streamSubWidget : widget.subVideo
       ) : AspectRatio(
         aspectRatio: widget.aspectRatio,
         child: Center(
