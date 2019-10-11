@@ -6,6 +6,8 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:video_player/video_player.dart';
 
+import 'control.dart';
+
 typedef FTCallBack(VideoPlayerController controller);
 
 class FluTube extends StatefulWidget {
@@ -59,6 +61,7 @@ class FluTube extends StatefulWidget {
   final bool showThumb;
 
   final Widget subVideo;
+
   /// Video events
 
   /// Video start
@@ -70,55 +73,53 @@ class FluTube extends StatefulWidget {
   final Widget customControl;
 
   FTCallBack callBackController;
-  FluTube(
-    @required String videourl, {
-    Key key,
-    this.aspectRatio,
-    this.autoInitialize = false,
-    this.autoPlay = false,
-    this.startAt,
-    this.looping = false,
-    this.placeholder,
-    this.showControls = true,
-    this.fullscreenByDefault = false,
-    this.showThumb = true,
-    this.allowMuting = true,
-    this.allowScreenSleep = false,
-    this.allowFullScreen = true,
-    this.deviceOrientationAfterFullscreen,
-    this.systemOverlaysAfterFullscreen,
-    this.onVideoStart,
-    this.onVideoEnd,
-    this.callBackController,
-    this.subVideo,
-    this.customControl
-  }) : super(key: key) {
+  FluTube(@required String videourl,
+      {Key key,
+      this.aspectRatio,
+      this.autoInitialize = false,
+      this.autoPlay = false,
+      this.startAt,
+      this.looping = false,
+      this.placeholder,
+      this.showControls = true,
+      this.fullscreenByDefault = false,
+      this.showThumb = true,
+      this.allowMuting = true,
+      this.allowScreenSleep = false,
+      this.allowFullScreen = true,
+      this.deviceOrientationAfterFullscreen,
+      this.systemOverlaysAfterFullscreen,
+      this.onVideoStart,
+      this.onVideoEnd,
+      this.callBackController,
+      this.subVideo,
+      this.customControl})
+      : super(key: key) {
     this._videourls = videourl;
   }
 
-  FluTube.playlist(
-    @required List<String> playlist, {
-    Key key,
-    this.aspectRatio,
-    this.autoInitialize = false,
-    this.autoPlay = false,
-    this.startAt,
-    this.placeholder,
-    this.looping = false,
-    this.showControls = true,
-    this.fullscreenByDefault = false,
-    this.showThumb = true,
-    this.allowMuting = true,
-    this.allowScreenSleep = false,
-    this.allowFullScreen = true,
-    this.deviceOrientationAfterFullscreen,
-    this.systemOverlaysAfterFullscreen,
-    this.onVideoStart,
-    this.onVideoEnd,
-    this.callBackController,
-    this.subVideo,
-    this.customControl
-  }) : super(key: key) {
+  FluTube.playlist(@required List<String> playlist,
+      {Key key,
+      this.aspectRatio,
+      this.autoInitialize = false,
+      this.autoPlay = false,
+      this.startAt,
+      this.placeholder,
+      this.looping = false,
+      this.showControls = true,
+      this.fullscreenByDefault = false,
+      this.showThumb = true,
+      this.allowMuting = true,
+      this.allowScreenSleep = false,
+      this.allowFullScreen = true,
+      this.deviceOrientationAfterFullscreen,
+      this.systemOverlaysAfterFullscreen,
+      this.onVideoStart,
+      this.onVideoEnd,
+      this.callBackController,
+      this.subVideo,
+      this.customControl})
+      : super(key: key) {
     assert(playlist.length > 0, 'Playlist should not be empty!');
     this._videourls = playlist;
   }
@@ -127,28 +128,63 @@ class FluTube extends StatefulWidget {
   FluTubeState createState() => FluTubeState();
 }
 
-class FluTubeState extends State<FluTube>{
+class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
   VideoPlayerController videoController;
   ChewieController chewieController;
   bool isPlaying = false;
   bool _needsShowThumb;
   int _currentlyPlaying = 0; // Track position of currently playing video
-
+  double widthCurrent;
+  double heightCurrent;
   String _lastUrl;
   bool get _isPlaylist => widget._videourls is List<String>;
+  bool _isFullScreen = false;
+  Controls controls;
 
   @override
   initState() {
     super.initState();
     if (videoController != null) videoController.dispose();
     if (chewieController != null) chewieController.dispose();
-
+//    controls = Controls();
     _needsShowThumb = !widget.autoPlay;
-    if(_isPlaylist) {
-      _initialize((widget._videourls as List<String>)[0]); // Play the very first video of the playlist
+    if (_isPlaylist) {
+      _initialize((widget._videourls
+          as List<String>)[0]); // Play the very first video of the playlist
     } else {
       _initialize(widget._videourls as String);
     }
+    widthCurrent = WidgetsBinding.instance.window.physicalSize.width;
+    heightCurrent = WidgetsBinding.instance.window.physicalSize.height;
+  }
+
+  @override
+  void dispose() {
+    if (videoController != null) videoController.dispose();
+    if (chewieController != null) chewieController.dispose();
+    widget.callBackController(videoController);
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeMetrics() {
+    widthCurrent = WidgetsBinding.instance.window.physicalSize.width;
+    heightCurrent = WidgetsBinding.instance.window.physicalSize.height;
+    // Switched to LandScape Mode
+    if (widthCurrent > heightCurrent && !_isFullScreen) {
+      // TODO: puzuka  fix full screen
+      // callBack.callback(_isFullScreen);
+      _isFullScreen = true;
+    }
+    // Switched to Portrait Mode
+    if (widthCurrent < heightCurrent && _isFullScreen) {
+      // TODO: puzuka  fix full screen
+      // callBack.callback(_isFullScreen);
+      _isFullScreen = false;
+      Navigator.pop(context);
+    }
+    super.didChangeMetrics();
   }
 
   void _initialize(String _url) {
@@ -160,7 +196,7 @@ class FluTubeState extends State<FluTube>{
         ..addListener(_endListener);
 
       // Video start callback
-      if(widget.onVideoStart != null) {
+      if (widget.onVideoStart != null) {
         videoController.addListener(_startListener);
       }
 
@@ -175,18 +211,42 @@ class FluTubeState extends State<FluTube>{
           showControls: widget.showControls,
           fullScreenByDefault: widget.fullscreenByDefault,
           allowFullScreen: widget.allowFullScreen,
-          deviceOrientationsAfterFullScreen: widget.deviceOrientationAfterFullscreen,
+          deviceOrientationsAfterFullScreen:
+              widget.deviceOrientationAfterFullscreen,
           systemOverlaysAfterFullScreen: widget.systemOverlaysAfterFullscreen,
           allowedScreenSleep: widget.allowScreenSleep,
           allowMuting: widget.allowMuting,
-          customControls: widget.customControl
+          customControls: widget.customControl);
+      controls = Controls(
+        height: heightCurrent,
+        width: widthCurrent,
+        controller: videoController,
+        showControls: false,
+        isFullScreen: _isFullScreen,
+        controlsActiveBackgroundOverlay: false,
+        controlsColor: ControlsColor(),
+        controlsTimeOut: const Duration(seconds: 3),
+        switchFullScreenOnLongPress: false,
+        controlsShowingCallback: (showing) {
+          Timer(Duration(milliseconds: 600), () {
+            if (mounted)
+              setState(() {
+                // _showVideoProgressBar = !showing;
+              });
+          });
+        },
+        fullScreenCallback: () async {
+          // await _pushFullScreenWidget(context);
+        },
+        // hideShareButton: widget.hideShareButton,
       );
+      setState(() {});
       widget.callBackController(videoController);
     });
   }
 
   _playingListener() {
-    if(isPlaying != videoController.value.isPlaying){
+    if (isPlaying != videoController.value.isPlaying) {
       setState(() {
         isPlaying = videoController.value.isPlaying;
         widget.callBackController(videoController);
@@ -195,31 +255,35 @@ class FluTubeState extends State<FluTube>{
   }
 
   _startListener() {
-    if(videoController.value.initialized && isPlaying)
-      {widget.onVideoStart();widget.callBackController(videoController);}
+    print("_startListener ");
+    if (videoController.value.initialized && isPlaying) {
+      widget.onVideoStart();
+      widget.callBackController(videoController);
+    }
   }
 
   _endListener() {
     // Video end callback
-    if(videoController != null) {
-      if(videoController.value.initialized && !videoController.value.isBuffering) {
-        if(videoController.value.position >= videoController.value.duration){
-          if(isPlaying){
+    if (videoController != null) {
+      if (videoController.value.initialized &&
+          !videoController.value.isBuffering) {
+        if (videoController.value.position >= videoController.value.duration) {
+          if (isPlaying) {
             chewieController.pause();
             chewieController.seekTo(Duration());
           }
-          if(widget.onVideoEnd != null)
-            widget.onVideoEnd();
-          if(widget.showThumb && !_isPlaylist){
+          if (widget.onVideoEnd != null) widget.onVideoEnd();
+          if (widget.showThumb && !_isPlaylist) {
             setState(() {
               _needsShowThumb = true;
             });
           }
-          if(_isPlaylist) {
-            if(_currentlyPlaying < (widget._videourls as List<String>).length - 1){
+          if (_isPlaylist) {
+            if (_currentlyPlaying <
+                (widget._videourls as List<String>).length - 1) {
               _playlistLoadNext();
             } else {
-              if(widget.looping) {
+              if (widget.looping) {
                 _playlistLoop();
               }
             }
@@ -232,7 +296,8 @@ class FluTubeState extends State<FluTube>{
 
   _errorListener() {
     if (!videoController.value.hasError) return;
-    if (videoController.value.errorDescription.contains("code: 403")) _initialize(_lastUrl);
+    if (videoController.value.errorDescription.contains("code: 403"))
+      _initialize(_lastUrl);
   }
 
   _playlistLoadNext() {
@@ -261,17 +326,9 @@ class FluTubeState extends State<FluTube>{
   }
 
   @override
-  void dispose() {
-    if (videoController != null) videoController.dispose();
-    if (chewieController != null) chewieController.dispose();
-    widget.callBackController(videoController);
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     print(_currentlyPlaying);
-    if(widget.showThumb && !isPlaying && _needsShowThumb){
+    if (widget.showThumb && !isPlaying && _needsShowThumb) {
       return Center(
         child: Container(
           width: MediaQuery.of(context).size.width,
@@ -281,7 +338,9 @@ class FluTubeState extends State<FluTube>{
               fit: StackFit.expand,
               children: <Widget>[
                 Image.network(
-                  _videoThumbURL(_isPlaylist ? widget._videourls[_currentlyPlaying] : widget._videourls),
+                  _videoThumbURL(_isPlaylist
+                      ? widget._videourls[_currentlyPlaying]
+                      : widget._videourls),
                   fit: BoxFit.cover,
                 ),
                 Center(
@@ -310,37 +369,73 @@ class FluTubeState extends State<FluTube>{
         ),
       );
     } else {
-      return chewieController != null ? Chewie(
-        key: widget.key,
-        controller: chewieController,
-        streamSubWidget : widget.subVideo
-      ) : AspectRatio(
-        aspectRatio: widget.aspectRatio,
-        child: Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
+      return chewieController != null
+          ? Stack(
+              children: <Widget>[
+                Chewie(
+                  key: widget.key,
+                  controller: chewieController,
+                  streamSubWidget: widget.subVideo,
+                ),
+                initControls()
+              ],
+            )
+          : AspectRatio(
+              aspectRatio: widget.aspectRatio,
+              child: Center(
+                child: CircularProgressIndicator(),
+              ),
+            );
     }
   }
 
   Future<String> _fetchVideoURL(String yt) async {
     final response = await http.get(yt);
-    Iterable parseAll = _allStringMatches(response.body, RegExp("\"url_encoded_fmt_stream_map\":\"([^\"]*)\""));
-    final Iterable<String> parse = _allStringMatches(parseAll.toList()[0], RegExp("url=(.*)"));
+    Iterable parseAll = _allStringMatches(
+        response.body, RegExp("\"url_encoded_fmt_stream_map\":\"([^\"]*)\""));
+    final Iterable<String> parse =
+        _allStringMatches(parseAll.toList()[0], RegExp("url=(.*)"));
     final List<String> urls = parse.toList()[0].split('url=');
     parseAll = _allStringMatches(urls[1], RegExp("([^&,]*)[&,]"));
     String finalUrl = Uri.decodeFull(parseAll.toList()[0]);
-    if(finalUrl.indexOf('\\u00') > -1)
+    if (finalUrl.indexOf('\\u00') > -1)
       finalUrl = finalUrl.substring(0, finalUrl.indexOf('\\u00'));
     return finalUrl;
   }
 
-  Iterable<String> _allStringMatches(String text, RegExp regExp) => regExp.allMatches(text).map((m) => m.group(0));
+  Iterable<String> _allStringMatches(String text, RegExp regExp) =>
+      regExp.allMatches(text).map((m) => m.group(0));
 
   String _videoThumbURL(String yt) {
     String id = yt.substring(yt.indexOf('v=') + 2);
-    if(id.contains('&'))
-      id = id.substring(0, id.indexOf('&'));
+    if (id.contains('&')) id = id.substring(0, id.indexOf('&'));
     return "http://img.youtube.com/vi/$id/0.jpg";
+  }
+
+  Widget initControls() {
+    print("initControls");
+    return Controls(
+      height: heightCurrent,
+      width: widthCurrent,
+      controller: videoController,
+      showControls: true,
+      isFullScreen: _isFullScreen,
+      controlsActiveBackgroundOverlay: false,
+      controlsColor: ControlsColor(),
+      controlsTimeOut: const Duration(seconds: 3),
+      switchFullScreenOnLongPress: false,
+      controlsShowingCallback: (showing) {
+        Timer(Duration(milliseconds: 600), () {
+          if (mounted)
+            setState(() {
+              // _showVideoProgressBar = !showing;
+            });
+        });
+      },
+      fullScreenCallback: () async {
+        // await _pushFullScreenWidget(context);
+      },
+      // hideShareButton: widget.hideShareButton,
+    );
   }
 }
