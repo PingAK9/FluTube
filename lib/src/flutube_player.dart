@@ -167,25 +167,6 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
     super.dispose();
   }
 
-  @override
-  void didChangeMetrics() {
-    widthCurrent = WidgetsBinding.instance.window.physicalSize.width;
-    heightCurrent = WidgetsBinding.instance.window.physicalSize.height;
-    // Switched to LandScape Mode
-    if (widthCurrent > heightCurrent && !_isFullScreen) {
-      // TODO: puzuka  fix full screen
-      // callBack.callback(_isFullScreen);
-      _isFullScreen = true;
-    }
-    // Switched to Portrait Mode
-    if (widthCurrent < heightCurrent && _isFullScreen) {
-      // TODO: puzuka  fix full screen
-      // callBack.callback(_isFullScreen);
-      _isFullScreen = false;
-      Navigator.pop(context);
-    }
-    super.didChangeMetrics();
-  }
 
   void _initialize(String _url) {
     _lastUrl = _url;
