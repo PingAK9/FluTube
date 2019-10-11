@@ -50,7 +50,7 @@ class Controls extends StatefulWidget {
 
   VideoPlayerController controller;
   final VoidCallback fullScreenCallback;
-  final bool isFullScreen;
+  bool isFullScreen;
   final ControlsShowingCallback controlsShowingCallback;
   // ControlsColor controlsColor;
   final bool controlsActiveBackgroundOverlay;
@@ -271,7 +271,7 @@ class _ControlsState extends State<Controls> {
             onTap: () {
 //                printLog("Tap _fastForward");
               if (widget.playCtrDelegate != null) {
-                widget.playCtrDelegate.next();
+                widget.playCtrDelegate.nextVideo();
               }
             },
             child: _showControls
@@ -325,6 +325,7 @@ class _ControlsState extends State<Controls> {
           child: GestureDetector(
             onTap: () {
 //                printLog("Tap _rewind");
+              widget.playCtrDelegate.previousVideo();
             },
             child: _showControls
                 ? Center(
@@ -454,9 +455,10 @@ class _ControlsState extends State<Controls> {
             InkWell(
               splashColor: Colors.grey[350],
               onTap: () {
-                widget.isFullScreen
-                    ? Navigator.pop(context)
-                    : widget.fullScreenCallback();
+                bool _isFull = widget.playCtrDelegate.fullscreen(widget.isFullScreen);
+                setState(() {
+                  widget.isFullScreen = _isFull;
+                });
               },
               child: Padding(
                 padding: EdgeInsets.all(widget.width <= 200 ? 4.0 : 10.0),

@@ -1,5 +1,8 @@
 abstract class PlayControlDelegate {
-  void next ();
-  void pre ();
+  void nextVideo ();
+  void previousVideo ();
+  void playVideo ();
+  bool fullscreen (bool isFullscreen);
+  void subvideo ();
   // void 
 }
