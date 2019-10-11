@@ -239,7 +239,7 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
   _startListener() {
     print("_startListener ");
     if (videoController.value.initialized && isPlaying) {
-      widget.onVideoStart();
+      // widget.onVideoStart();
       widget.callBackController(videoController);
     }
   }
