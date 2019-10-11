@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutube/flutube.dart';
+import 'package:flutube/src/callback_control.dart';
 import 'package:video_player/video_player.dart';
 // import '../video_player_controller.dart';
 
@@ -28,18 +29,6 @@ class ControlsColor {
     this.controlsBackgroundColor = Colors.transparent,
   });
 }
-
-// class CallBackVideoController {
-//   static CallBackVideoController instance;
-
-//   Function() callback;
-
-//   factory CallBackVideoController() {
-//     if (instance == null) instance = CallBackVideoController._internal();
-//     return instance;
-//   }
-//   CallBackVideoController._internal();
-// }
 
 class Controls extends StatefulWidget {
   final bool showControls;
@@ -90,19 +79,18 @@ class _ControlsState extends State<Controls> {
   bool _buffering = false;
   Timer _timer;
   int seekCount = 0;
-  // CallBackVideoController callbackController;
+  CallBackVideoController callbackController;
   @override
   void initState() {
-    // widget.controlsColor = ControlsColor();
-    // widget.controller.addListener(listener);
     _showControls = widget.showControls ?? true;
     widget.controlsShowingCallback(_showControls);
     super.initState();
-    // callbackController.callback = () {
-    //   // if (_controller.value.initialized) {
-    //   //   widget.controller = controller;
-    //   // }
-    // };
+    callbackController = CallBackVideoController();
+    callbackController.callback = (_controller) {
+      if (_controller.value.initialized) {
+        widget.controller = _controller;
+      }
+    };
     print("[_ControlsState] initState");
   }
 
@@ -153,22 +141,11 @@ class _ControlsState extends State<Controls> {
   @override
   Widget build(BuildContext context) {
     print("control build");
-//    _playingVideoBloc = BlocProvider.of(context);
-    // if (widget.isFullScreen) YoutubePlayer.keepOn(true);
-    double w = widget.width;
-    double h = widget.height;
-    // if(w > h){
-
-    // }else{
-    //   h = widget.width * 9 / 16;
-    // }
-    // double w = 0;
-    // double h = 0;
     return Stack(
       children: <Widget>[
         _showControls
             ? Container(
-                color: Color(0x88000000),
+                // color: Color(0x88000000),
                 height: widget.height,
                 width: widget.width,
               )
@@ -182,15 +159,15 @@ class _ControlsState extends State<Controls> {
           },
           onTap: () {
             print(">>>>>>>>>>>>>>>>> TAP");
-            // if (mounted) {
-            //   setState(() {
-            //     _showControls = false;
-            //     widget.controlsShowingCallback(_showControls);
-            //   });
-            // }
-            // if (!_buffering) {
-            //   togglePlaying();
-            // }
+            if (mounted) {
+              setState(() {
+                _showControls = false;
+                widget.controlsShowingCallback(_showControls);
+              });
+            }
+            if (!_buffering) {
+              togglePlaying();
+            }
           },
           child: AnimatedOpacity(
             opacity: _showControls ? 1.0 : 0.0,
@@ -224,9 +201,7 @@ class _ControlsState extends State<Controls> {
                       ),
                     ),
                   ),
-
                   _buildBottomControls(),
-                  // _buildBottomControls(),
                 ],
               ),
             ),
@@ -325,7 +300,9 @@ class _ControlsState extends State<Controls> {
           child: GestureDetector(
             onTap: () {
 //                printLog("Tap _rewind");
-              widget.playCtrDelegate.previousVideo();
+              if (widget.playCtrDelegate != null) {
+                widget.playCtrDelegate.previousVideo();
+              }
             },
             child: _showControls
                 ? Center(
@@ -354,7 +331,7 @@ class _ControlsState extends State<Controls> {
         widget.controlsShowingCallback(_showControls);
       });
     }
-    if (_showControls) {
+    if (_showControls) {      
       _timer = Timer(widget.controlsTimeOut, () {
         if (mounted) {
           setState(() {
@@ -377,6 +354,7 @@ class _ControlsState extends State<Controls> {
           splashColor: Colors.grey[350],
           borderRadius: BorderRadius.circular(100.0),
           onTap: () {
+
             if (mounted) {
               setState(() {
                 _showControls = false;
@@ -455,10 +433,13 @@ class _ControlsState extends State<Controls> {
             InkWell(
               splashColor: Colors.grey[350],
               onTap: () {
-                bool _isFull = widget.playCtrDelegate.fullscreen(widget.isFullScreen);
-                setState(() {
-                  widget.isFullScreen = _isFull;
-                });
+                if (widget.playCtrDelegate != null) {
+                  bool _isFull =
+                      widget.playCtrDelegate.fullscreen(widget.isFullScreen);
+                  setState(() {
+                    widget.isFullScreen = _isFull;
+                  });
+                }
               },
               child: Padding(
                 padding: EdgeInsets.all(widget.width <= 200 ? 4.0 : 10.0),
@@ -477,17 +458,20 @@ class _ControlsState extends State<Controls> {
   }
 
   void togglePlaying() {
-    if (widget.controller.value.isPlaying == true) {
-      // widget.controller.pause();
-      if (mounted) {
-        setState(() {
-          _showControls = true;
-          widget.controlsShowingCallback(_showControls);
-        });
-      }
-    } else {
-      // widget.controller.play();
+    if(widget.playCtrDelegate != null){
+      widget.playCtrDelegate.playVideo(widget.controller.value.isPlaying);
     }
+    // if (widget.controller.value.isPlaying == true) {
+    //   // widget.controller.pause();
+    //   if (mounted) {
+    //     setState(() {
+    //       _showControls = true;
+    //       widget.controlsShowingCallback(_showControls);
+    //     });
+    //   }
+    // } else {
+    //   // widget.controller.play();
+    // }
   }
 
   Widget _buildAppBar(BuildContext context) {

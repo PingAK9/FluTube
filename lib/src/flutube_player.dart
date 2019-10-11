@@ -242,10 +242,10 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
         width: widget.width,
         height: widget.height,
         controller: videoController,
-        showControls: true,
+        showControls: false,
         isFullScreen: _isFullScreen,
         controlsActiveBackgroundOverlay: false,
-        controlsTimeOut: const Duration(seconds: 3),
+        controlsTimeOut: const Duration(seconds: 2),
         switchFullScreenOnLongPress: false,
         controlsShowingCallback: (showing) {
           Timer(Duration(milliseconds: 600), () {
