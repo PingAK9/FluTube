@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutube/flutube.dart';
 import 'package:video_player/video_player.dart';
 // import '../video_player_controller.dart';
 
 typedef YoutubeQualityChangeCallback(String quality, Duration position);
 typedef ControlsShowingCallback(bool showing);
+
 class ControlsColor {
   final Color timerColor;
   final Color seekBarPlayedColor;
@@ -26,6 +28,19 @@ class ControlsColor {
     this.controlsBackgroundColor = Colors.transparent,
   });
 }
+
+// class CallBackVideoController {
+//   static CallBackVideoController instance;
+
+//   Function() callback;
+
+//   factory CallBackVideoController() {
+//     if (instance == null) instance = CallBackVideoController._internal();
+//     return instance;
+//   }
+//   CallBackVideoController._internal();
+// }
+
 class Controls extends StatefulWidget {
   final bool showControls;
   final double width;
@@ -33,16 +48,17 @@ class Controls extends StatefulWidget {
   final String defaultQuality;
   final bool defaultCall;
 
-  final VideoPlayerController controller;
+  VideoPlayerController controller;
   final VoidCallback fullScreenCallback;
   final bool isFullScreen;
   final ControlsShowingCallback controlsShowingCallback;
-   ControlsColor controlsColor;
+  // ControlsColor controlsColor;
   final bool controlsActiveBackgroundOverlay;
   final Duration controlsTimeOut;
 
   final bool switchFullScreenOnLongPress;
   final bool hideShareButton;
+  PlayControlDelegate playCtrDelegate;
 
   Controls({
     this.showControls,
@@ -54,11 +70,12 @@ class Controls extends StatefulWidget {
     this.fullScreenCallback,
     this.controlsShowingCallback,
     this.isFullScreen = false,
-    this.controlsColor,
+    // this.controlsColor,
     this.controlsActiveBackgroundOverlay,
     this.controlsTimeOut,
     this.switchFullScreenOnLongPress,
     this.hideShareButton,
+    this.playCtrDelegate,
   });
 
   @override
@@ -73,33 +90,40 @@ class _ControlsState extends State<Controls> {
   bool _buffering = false;
   Timer _timer;
   int seekCount = 0;
-
+  // CallBackVideoController callbackController;
   @override
   void initState() {
-    widget.controlsColor = widget.controlsColor ?? ControlsColor();
-    widget.controller.addListener(listener);
-    _showControls = widget.showControls;
+    // widget.controlsColor = ControlsColor();
+    // widget.controller.addListener(listener);
+    _showControls = widget.showControls ?? true;
     widget.controlsShowingCallback(_showControls);
     super.initState();
+    // callbackController.callback = () {
+    //   // if (_controller.value.initialized) {
+    //   //   widget.controller = controller;
+    //   // }
+    // };
     print("[_ControlsState] initState");
   }
 
   listener() {
-    if (widget.controller.value != null) {
-      if (widget.controller.value.position != null &&
-          widget.controller.value.duration != null) {
-        if (mounted && widget.controller.value.isPlaying) {
-          setState(() {
-            currentPosition =
-                (widget.controller.value.position.inSeconds ?? 0) /
-                    widget.controller.value.duration.inSeconds;
-            _buffering = widget.controller.value.isBuffering;
-            _currentPositionString =
-                formatDuration(widget.controller.value.position);
-            _remainingString = "- " +
-                formatDuration(widget.controller.value.duration -
-                    widget.controller.value.position);
-          });
+    if (widget.controller.value.initialized) {
+      if (widget.controller.value != null) {
+        if (widget.controller.value.position != null &&
+            widget.controller.value.duration != null) {
+          if (mounted && widget.controller.value.isPlaying) {
+            setState(() {
+              currentPosition =
+                  (widget.controller.value.position.inSeconds ?? 0) /
+                      widget.controller.value.duration.inSeconds;
+              _buffering = widget.controller.value.isBuffering;
+              _currentPositionString =
+                  formatDuration(widget.controller.value.position);
+              _remainingString = "- " +
+                  formatDuration(widget.controller.value.duration -
+                      widget.controller.value.position);
+            });
+          }
         }
       }
     }
@@ -108,20 +132,20 @@ class _ControlsState extends State<Controls> {
   @override
   void didUpdateWidget(Controls oldWidget) {
     super.didUpdateWidget(oldWidget);
-    oldWidget.controller.removeListener(listener);
-    widget.controller.addListener(listener);
+    // oldWidget.controller.removeListener(listener);
+    // widget.controller.addListener(listener);
   }
 
   @override
   void deactivate() {
-    widget.controller.removeListener(listener);
+    // widget.controller.removeListener(listener);
     super.deactivate();
   }
 
   @override
   void dispose() {
     if (!widget.isFullScreen) {
-      widget.controller?.setVolume(0);
+      // widget.controller?.setVolume(0);
     }
     super.dispose();
   }
@@ -131,76 +155,88 @@ class _ControlsState extends State<Controls> {
     print("control build");
 //    _playingVideoBloc = BlocProvider.of(context);
     // if (widget.isFullScreen) YoutubePlayer.keepOn(true);
+    double w = widget.width;
+    double h = widget.height;
+    // if(w > h){
 
+    // }else{
+    //   h = widget.width * 9 / 16;
+    // }
+    // double w = 0;
+    // double h = 0;
     return Stack(
       children: <Widget>[
+        _showControls
+            ? Container(
+                color: Color(0x88000000),
+                height: widget.height,
+                width: widget.width,
+              )
+            : Container(),
         GestureDetector(
           onLongPress: () {
-            if (widget.switchFullScreenOnLongPress)
-              widget.isFullScreen
-                  ? Navigator.pop(context)
-                  : widget.fullScreenCallback();
+            // if (widget.switchFullScreenOnLongPress)
+            //   widget.isFullScreen
+            //       ? Navigator.pop(context)
+            //       : widget.fullScreenCallback();
           },
-          onTap: (){
+          onTap: () {
             print(">>>>>>>>>>>>>>>>> TAP");
-            if (mounted) {
-              setState(() {
-                _showControls = false;
-                widget.controlsShowingCallback(_showControls);
-              });
-            }
-            if (!_buffering) {
-              togglePlaying();
-            }
+            // if (mounted) {
+            //   setState(() {
+            //     _showControls = false;
+            //     widget.controlsShowingCallback(_showControls);
+            //   });
+            // }
+            // if (!_buffering) {
+            //   togglePlaying();
+            // }
           },
-          child: Stack(
-            children: <Widget>[
-              Container(
-                // [TODO]: need to fix height here
-//                height: 100,
-                child: AnimatedOpacity(
-                  opacity: _showControls ? 1.0 : 0.0,
-                  duration: Duration(milliseconds: 200),
-                  child: Material(
-                    color: Color(0x88000000),
-                    child: Stack(
-                      children: <Widget>[
-
-                        Center(
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: <Widget>[
-                              Expanded(
-                                child: _rewind(widget.height,widget.width),
-                                flex: 4,
-                              ),
-                              Expanded(
-                                child: _playButton(widget.width),
-                                flex: 2,
-                              ),
-                              Expanded(
-                                child: _fastForward(widget.height,widget.width),
-                                flex: 4,
-                              )
-                            ],
+          child: AnimatedOpacity(
+            opacity: _showControls ? 1.0 : 0.0,
+            duration: Duration(milliseconds: 200),
+            child: Material(
+              color: Color(0x88000000),
+              child: Stack(
+                children: <Widget>[
+                  _buildAppBar(context),
+                  Container(
+                    width: widget.width - 10,
+                    height: widget.height,
+                    child: Center(
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: <Widget>[
+                          Expanded(
+                            child: _rewind(),
+                            flex: 4,
                           ),
-                        ),
-                        Positioned(child: _buildAppBar(context),top: 0,)
-                        // _buildBottomControls(),
-                      ],
+                          Expanded(
+                            child: _playButton(),
+                            flex: 2,
+                          ),
+                          Expanded(
+                            child: _fastForward(),
+                            flex: 4,
+                          )
+                        ],
+                      ),
                     ),
                   ),
-                ),
+
+                  _buildBottomControls(),
+                  // _buildBottomControls(),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ],
     );
   }
 
-  Widget _fastForward(double _height, double _width) {
+  Widget _fastForward() {
     return Stack(
       children: <Widget>[
         GestureDetector(
@@ -211,9 +247,10 @@ class _ControlsState extends State<Controls> {
                 widget.controlsShowingCallback(_showControls);
                 seekCount += 10;
               });
-              widget.controller.seekTo(
-                Duration(seconds: widget.controller.value.position.inSeconds + 5),
-              );
+              // widget.controller.seekTo(
+              //   Duration(
+              //       seconds: widget.controller.value.position.inSeconds + 5),
+              // );
               Timer(Duration(seconds: 2), () {
                 if (mounted) {
                   setState(() {
@@ -231,29 +268,32 @@ class _ControlsState extends State<Controls> {
         ),
         Center(
           child: GestureDetector(
-              onTap: (){
+            onTap: () {
 //                printLog("Tap _fastForward");
-              },
-              child: _showControls
-                  ? Center(
-                      child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: <Widget>[
-                         Icon(
-                           Icons.fast_forward,
-                           size: 40.0,
-                           color: Colors.white,
-                         ),
-                      ],
-                    ))
-                  : Container(),
+              if (widget.playCtrDelegate != null) {
+                widget.playCtrDelegate.next();
+              }
+            },
+            child: _showControls
+                ? Center(
+                    child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Icon(
+                        Icons.fast_forward,
+                        size: 40.0,
+                        color: Colors.white,
+                      ),
+                    ],
+                  ))
+                : Container(),
           ),
         )
       ],
     );
   }
 
-  Widget _rewind(double _height, double _width) {
+  Widget _rewind() {
     return Stack(
       children: <Widget>[
         GestureDetector(
@@ -264,9 +304,10 @@ class _ControlsState extends State<Controls> {
                 widget.controlsShowingCallback(_showControls);
                 seekCount += 10;
               });
-              widget.controller.seekTo(
-                Duration(seconds: widget.controller.value.position.inSeconds - 5),
-              );
+              // widget.controller.seekTo(
+              //   Duration(
+              //       seconds: widget.controller.value.position.inSeconds - 5),
+              // );
               Timer(Duration(seconds: 2), () {
                 if (mounted) {
                   setState(() {
@@ -282,22 +323,22 @@ class _ControlsState extends State<Controls> {
         ),
         Center(
           child: GestureDetector(
-              onTap: (){
+            onTap: () {
 //                printLog("Tap _rewind");
-              },
-              child: _showControls
-                  ? Center(
-                      child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: <Widget>[
-                         Icon(
-                           Icons.fast_rewind,
-                           size: 40.0,
-                           color: Colors.white,
-                         ),
-                      ],
-                    ))
-                  : Container(),
+            },
+            child: _showControls
+                ? Center(
+                    child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Icon(
+                        Icons.fast_rewind,
+                        size: 40.0,
+                        color: Colors.white,
+                      ),
+                    ],
+                  ))
+                : Container(),
           ),
         )
       ],
@@ -322,15 +363,15 @@ class _ControlsState extends State<Controls> {
         }
       });
     }
-    if (!widget.controller.value.isPlaying) widget.controller.play();
+    // if (!widget.controller.value.isPlaying) widget.controller.play();
   }
 
-  Widget _playButton(double width) {
+  Widget _playButton() {
     return IgnorePointer(
       ignoring: !_showControls,
       child: Material(
         borderRadius: BorderRadius.circular(100.0),
-        color: widget.controlsColor.controlsBackgroundColor,
+        color: Colors.transparent,
         child: InkWell(
           splashColor: Colors.grey[350],
           borderRadius: BorderRadius.circular(100.0),
@@ -351,10 +392,8 @@ class _ControlsState extends State<Controls> {
                   widget.controller.value.isPlaying
                       ? Icons.pause
                       : Icons.play_arrow,
-                  color: widget.controlsColor.playPauseColor,
-                  size: widget.isFullScreen
-                      ? widget.width * 0.06
-                      : widget.width * 0.12,
+                  color: Colors.white,
+                  size: 40.0,
                 ),
         ),
       ),
@@ -362,11 +401,12 @@ class _ControlsState extends State<Controls> {
   }
 
   Widget _buildBottomControls() {
-    int totalLength = widget.controller.value.duration.inSeconds ?? 0;
+    // int totalLength = widget.controller.value.duration.inSeconds ?? 0;
+    int totalLength = 20;
     return Positioned(
-      bottom: 0.0,
+      bottom: 10.0,
       child: Container(
-        color: widget.controlsColor.controlsBackgroundColor,
+        color: Colors.transparent,
         width: widget.width,
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -377,8 +417,7 @@ class _ControlsState extends State<Controls> {
               padding: const EdgeInsets.only(left: 10.0),
               child: Text(
                 _currentPositionString,
-                style: TextStyle(
-                    color: widget.controlsColor.timerColor, fontSize: 12.0),
+                style: TextStyle(color: Colors.white, fontSize: 12.0),
               ),
             ),
             Expanded(
@@ -386,8 +425,8 @@ class _ControlsState extends State<Controls> {
                 padding: EdgeInsets.only(top: 5),
                 height: 20,
                 child: Slider(
-                  activeColor: widget.controlsColor.seekBarPlayedColor,
-                  inactiveColor: widget.controlsColor.seekBarUnPlayedColor,
+                  activeColor: Colors.red,
+                  inactiveColor: Colors.grey,
                   value: currentPosition,
                   onChanged: (position) {
                     if (mounted) {
@@ -395,12 +434,12 @@ class _ControlsState extends State<Controls> {
                         currentPosition = position;
                       });
                     }
-                    widget.controller.seekTo(
-                      Duration(
-                        seconds: (position * totalLength).floor(),
-                      ),
-                    );
-                    widget.controller.play();
+                    // widget.controller.seekTo(
+                    //   Duration(
+                    //     seconds: (position * totalLength).floor(),
+                    //   ),
+                    // );
+                    // widget.controller.play();
                   },
                 ),
               ),
@@ -408,7 +447,7 @@ class _ControlsState extends State<Controls> {
             Text(
               _remainingString,
               style: TextStyle(
-                color: widget.controlsColor.timerColor,
+                color: Colors.white,
                 fontSize: 12.0,
               ),
             ),
@@ -421,12 +460,11 @@ class _ControlsState extends State<Controls> {
               },
               child: Padding(
                 padding: EdgeInsets.all(widget.width <= 200 ? 4.0 : 10.0),
-                child:
-                Icon(
+                child: Icon(
                   widget.isFullScreen
                       ? Icons.fullscreen_exit
                       : Icons.fullscreen,
-                  color: widget.controlsColor.buttonColor,
+                  color: Colors.white,
                 ),
               ),
             ),
@@ -438,7 +476,7 @@ class _ControlsState extends State<Controls> {
 
   void togglePlaying() {
     if (widget.controller.value.isPlaying == true) {
-      widget.controller.pause();
+      // widget.controller.pause();
       if (mounted) {
         setState(() {
           _showControls = true;
@@ -446,7 +484,7 @@ class _ControlsState extends State<Controls> {
         });
       }
     } else {
-      widget.controller.play();
+      // widget.controller.play();
     }
   }
 

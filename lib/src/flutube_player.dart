@@ -3,10 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:chewie/chewie.dart';
 import 'package:flutter/services.dart';
+import 'package:flutube/src/play_control_delegate.dart';
 import 'package:http/http.dart' as http;
 import 'package:video_player/video_player.dart';
 
 import 'control.dart';
+import 'control_color.dart';
 
 typedef FTCallBack(VideoPlayerController controller);
 
@@ -72,54 +74,67 @@ class FluTube extends StatefulWidget {
 
   final Widget customControl;
 
+  final double width;
+
+  final double height;
+
   FTCallBack callBackController;
-  FluTube(@required String videourl,
-      {Key key,
-      this.aspectRatio,
-      this.autoInitialize = false,
-      this.autoPlay = false,
-      this.startAt,
-      this.looping = false,
-      this.placeholder,
-      this.showControls = true,
-      this.fullscreenByDefault = false,
-      this.showThumb = true,
-      this.allowMuting = true,
-      this.allowScreenSleep = false,
-      this.allowFullScreen = true,
-      this.deviceOrientationAfterFullscreen,
-      this.systemOverlaysAfterFullscreen,
-      this.onVideoStart,
-      this.onVideoEnd,
-      this.callBackController,
-      this.subVideo,
-      this.customControl})
-      : super(key: key) {
+  PlayControlDelegate playCtrDelegate;
+  FluTube(
+    @required String videourl, {
+    Key key,
+    this.aspectRatio,
+    this.autoInitialize = false,
+    this.autoPlay = false,
+    this.startAt,
+    this.looping = false,
+    this.placeholder,
+    this.showControls = true,
+    this.fullscreenByDefault = false,
+    this.showThumb = true,
+    this.allowMuting = true,
+    this.allowScreenSleep = false,
+    this.allowFullScreen = true,
+    this.deviceOrientationAfterFullscreen,
+    this.systemOverlaysAfterFullscreen,
+    this.onVideoStart,
+    this.onVideoEnd,
+    this.callBackController,
+    this.subVideo,
+    this.customControl,
+    this.width,
+    this.height,
+    this.playCtrDelegate,
+  }) : super(key: key) {
     this._videourls = videourl;
   }
 
-  FluTube.playlist(@required List<String> playlist,
-      {Key key,
-      this.aspectRatio,
-      this.autoInitialize = false,
-      this.autoPlay = false,
-      this.startAt,
-      this.placeholder,
-      this.looping = false,
-      this.showControls = true,
-      this.fullscreenByDefault = false,
-      this.showThumb = true,
-      this.allowMuting = true,
-      this.allowScreenSleep = false,
-      this.allowFullScreen = true,
-      this.deviceOrientationAfterFullscreen,
-      this.systemOverlaysAfterFullscreen,
-      this.onVideoStart,
-      this.onVideoEnd,
-      this.callBackController,
-      this.subVideo,
-      this.customControl})
-      : super(key: key) {
+  FluTube.playlist(
+    @required List<String> playlist, {
+    Key key,
+    this.aspectRatio,
+    this.autoInitialize = false,
+    this.autoPlay = false,
+    this.startAt,
+    this.placeholder,
+    this.looping = false,
+    this.showControls = true,
+    this.fullscreenByDefault = false,
+    this.showThumb = true,
+    this.allowMuting = true,
+    this.allowScreenSleep = false,
+    this.allowFullScreen = true,
+    this.deviceOrientationAfterFullscreen,
+    this.systemOverlaysAfterFullscreen,
+    this.onVideoStart,
+    this.onVideoEnd,
+    this.callBackController,
+    this.subVideo,
+    this.customControl,
+    this.width,
+    this.height,
+    this.playCtrDelegate,
+  }) : super(key: key) {
     assert(playlist.length > 0, 'Playlist should not be empty!');
     this._videourls = playlist;
   }
@@ -140,6 +155,7 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
   bool get _isPlaylist => widget._videourls is List<String>;
   bool _isFullScreen = false;
   Controls controls;
+  bool showControl = false;
 
   @override
   initState() {
@@ -148,14 +164,13 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
     if (chewieController != null) chewieController.dispose();
 //    controls = Controls();
     _needsShowThumb = !widget.autoPlay;
+
     if (_isPlaylist) {
       _initialize((widget._videourls
           as List<String>)[0]); // Play the very first video of the playlist
     } else {
       _initialize(widget._videourls as String);
     }
-    widthCurrent = WidgetsBinding.instance.window.physicalSize.width;
-    heightCurrent = WidgetsBinding.instance.window.physicalSize.height;
   }
 
   @override
@@ -183,7 +198,6 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
       // if (widget.onVideoStart != null) {
       //   videoController.addListener(_startListener);
       // }
-
       chewieController = ChewieController(
           videoPlayerController: videoController,
           aspectRatio: widget.aspectRatio,
@@ -192,7 +206,7 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
           startAt: widget.startAt,
           looping: _isPlaylist ? false : widget.looping,
           placeholder: widget.placeholder,
-          showControls: widget.showControls,
+          showControls: false,
           fullScreenByDefault: widget.fullscreenByDefault,
           allowFullScreen: widget.allowFullScreen,
           deviceOrientationsAfterFullScreen:
@@ -200,31 +214,11 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
           systemOverlaysAfterFullScreen: widget.systemOverlaysAfterFullscreen,
           allowedScreenSleep: widget.allowScreenSleep,
           allowMuting: widget.allowMuting,
-          customControls: widget.customControl);
-      controls = Controls(
-        height: heightCurrent,
-        width: widthCurrent,
-        controller: videoController,
-        showControls: false,
-        isFullScreen: _isFullScreen,
-        controlsActiveBackgroundOverlay: false,
-        controlsColor: ControlsColor(),
-        controlsTimeOut: const Duration(seconds: 3),
-        switchFullScreenOnLongPress: false,
-        controlsShowingCallback: (showing) {
-          Timer(Duration(milliseconds: 600), () {
-            if (mounted)
-              setState(() {
-                // _showVideoProgressBar = !showing;
-              });
-          });
-        },
-        fullScreenCallback: () async {
-          // await _pushFullScreenWidget(context);
-        },
-        // hideShareButton: widget.hideShareButton,
-      );
-      setState(() {});
+          customControls: controls);
+      
+      setState(() {
+        showControl = false;
+      });
       widget.callBackController(videoController);
     });
   }
@@ -239,12 +233,41 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
   }
 
   _startListener() {
-    print("_startListener ");
     if (videoController.value.initialized && isPlaying) {
       // widget.onVideoStart();
       widget.callBackController(videoController);
+     
+      controls = Controls(
+        playCtrDelegate: widget.playCtrDelegate,
+        width: widget.width,
+        height: widget.height,
+        controller: videoController,
+        showControls: true,
+        isFullScreen: _isFullScreen,
+        controlsActiveBackgroundOverlay: false,
+        controlsTimeOut: const Duration(seconds: 3),
+        switchFullScreenOnLongPress: false,
+        controlsShowingCallback: (showing) {
+          Timer(Duration(milliseconds: 600), () {
+            if (mounted)
+              setState(() {
+                showControl = showing;
+                // _showVideoProgressBar = !showing;
+              });
+          });
+        },
+        fullScreenCallback: () async {
+          // await _pushFullScreenWidget(context);
+        },
+        // hideShareButton: widget.hideShareButton,
+      );
+      setState(() {
+        // _showVideoProgressBar = !showing;
+      });
     }
   }
+
+  
 
   _endListener() {
     // Video end callback
@@ -293,7 +316,6 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
     });
     videoController.pause();
     videoController = null;
-    print('FLAG');
     _initialize((widget._videourls as List<String>)[_currentlyPlaying]);
     chewieController.play();
     widget.callBackController(videoController);
@@ -363,7 +385,13 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
                   controller: chewieController,
                   streamSubWidget: widget.subVideo,
                 ),
-                initControls()
+                controls ??
+                    AspectRatio(
+                      aspectRatio: widget.aspectRatio,
+                      child: Center(
+                        child: CircularProgressIndicator(),
+                      ),
+                    )
               ],
             )
           : AspectRatio(
@@ -407,10 +435,11 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
       showControls: true,
       isFullScreen: _isFullScreen,
       controlsActiveBackgroundOverlay: false,
-      controlsColor: ControlsColor(),
+      // controlsColor: ControlsColor(),
       controlsTimeOut: const Duration(seconds: 2),
       switchFullScreenOnLongPress: false,
       controlsShowingCallback: (showing) {
+        print("showing $showing");
         Timer(Duration(milliseconds: 600), () {
           if (mounted)
             setState(() {
