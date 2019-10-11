@@ -174,12 +174,13 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
       videoController = VideoPlayerController.network(url)
         ..addListener(_playingListener)
         ..addListener(_errorListener)
-        ..addListener(_endListener);
+        ..addListener(_endListener)
+        ..addListener(_startListener);
 
       // Video start callback
-      if (widget.onVideoStart != null) {
-        videoController.addListener(_startListener);
-      }
+      // if (widget.onVideoStart != null) {
+      //   videoController.addListener(_startListener);
+      // }
 
       chewieController = ChewieController(
           videoPlayerController: videoController,
