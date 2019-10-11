@@ -170,7 +170,9 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
 
   void _initialize(String _url) {
     _lastUrl = _url;
+    print("_url $_url");
     _fetchVideoURL(_url).then((url) {
+
       videoController = VideoPlayerController.network(url)
         ..addListener(_playingListener)
         ..addListener(_errorListener)
@@ -278,8 +280,10 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
 
   _errorListener() {
     if (!videoController.value.hasError) return;
-    if (videoController.value.errorDescription.contains("code: 403"))
-      _initialize(_lastUrl);
+    print("_errorListener $_lastUrl");
+//    if (videoController.value.errorDescription.contains("code: 403"))
+//      _initialize(_lastUrl);
+    _initialize(_lastUrl);
   }
 
   _playlistLoadNext() {
@@ -395,7 +399,7 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
   }
 
   Widget initControls() {
-    print("initControls");
+//    print("initControls");
     return Controls(
       height: heightCurrent,
       width: widthCurrent,
@@ -404,13 +408,13 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
       isFullScreen: _isFullScreen,
       controlsActiveBackgroundOverlay: false,
       controlsColor: ControlsColor(),
-      controlsTimeOut: const Duration(seconds: 3),
+      controlsTimeOut: const Duration(seconds: 2),
       switchFullScreenOnLongPress: false,
       controlsShowingCallback: (showing) {
         Timer(Duration(milliseconds: 600), () {
           if (mounted)
             setState(() {
-              // _showVideoProgressBar = !showing;
+//               _showVideoProgressBar = !showing;
             });
         });
       },
