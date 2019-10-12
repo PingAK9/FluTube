@@ -13,6 +13,7 @@ dependencies:
     path: ../chewie
   flutter:
     sdk: flutter
+  screen: ^0.0.5
 
 flutter:
   assets:

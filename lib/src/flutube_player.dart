@@ -435,32 +435,4 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
     if (id.contains('&')) id = id.substring(0, id.indexOf('&'));
     return "http://img.youtube.com/vi/$id/0.jpg";
   }
-
-  Widget initControls() {
-//    print("initControls");
-    return Controls(
-      height: heightCurrent,
-      width: widthCurrent,
-      // controller: videoController,
-      showControls: true,
-      isFullScreen: _isFullScreen,
-      controlsActiveBackgroundOverlay: false,
-      // controlsColor: ControlsColor(),
-      controlsTimeOut: const Duration(seconds: 2),
-      switchFullScreenOnLongPress: false,
-      controlsShowingCallback: (showing) {
-        print("showing $showing");
-        Timer(Duration(milliseconds: 600), () {
-          if (mounted)
-            setState(() {
-//               _showVideoProgressBar = !showing;
-            });
-        });
-      },
-      fullScreenCallback: () async {
-        // await _pushFullScreenWidget(context);
-      },
-      // hideShareButton: widget.hideShareButton,
-    );
-  }
 }

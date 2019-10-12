@@ -10,3 +10,14 @@ class CallBackVideoController {
   }
   CallBackVideoController._internal();
 }
+class EventControl {
+  static EventControl instance;
+
+  Function() play;
+
+  factory EventControl() {
+    if (instance == null) instance = EventControl._internal();
+    return instance;
+  }
+  EventControl._internal();
+}

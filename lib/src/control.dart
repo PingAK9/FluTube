@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutube/flutube.dart';
 import 'package:flutube/src/callback_control.dart';
+import 'package:screen/screen.dart';
 import 'package:video_player/video_player.dart';
 
 // import '../video_player_controller.dart';
@@ -82,8 +83,11 @@ class _ControlsState extends State<Controls> {
   CallBackVideoController callbackController;
   VideoPlayerController videoController;
   bool isShowSub = true;
+  EventControl eventControl;
   @override
   void initState() {
+    eventControl = EventControl();
+    eventControl.play = playVideo;
     _showControls = widget.showControls ?? true;
     widget.controlsShowingCallback(_showControls);
     // widget.playCtrDelegate = PlayControlDelegate();
@@ -107,6 +111,17 @@ class _ControlsState extends State<Controls> {
     print("[_ControlsState] initState");
   }
 
+  playVideo() {
+    if (videoController != null && videoController.value.initialized) {
+      if (videoController.value.isPlaying) {
+        videoController.pause();
+        Screen.keepOn(false);
+      } else {
+        videoController.play();
+        Screen.keepOn(true);
+      }
+    }
+  }
   // @override
   // void didUpdateWidget(Controls oldWidget) {
   //   super.didUpdateWidget(oldWidget);
@@ -155,9 +170,8 @@ class _ControlsState extends State<Controls> {
           videoController.value.duration.inSeconds;
       _buffering = videoController.value.isBuffering;
       _currentPositionString = formatDuration(videoController.value.position);
-      _remainingString = 
-          formatDuration(
-              videoController.value.duration - videoController.value.position);
+      _remainingString = formatDuration(
+          videoController.value.duration - videoController.value.position);
     });
   }
 
@@ -405,11 +419,18 @@ class _ControlsState extends State<Controls> {
             onTap: () {
               print("Tap Player");
               onTapAction();
+
               if (videoController?.value?.initialized ?? false) {
-                if (videoController.value.isPlaying) {
-                  videoController.pause();
-                } else {
-                  videoController.play();
+                if (widget.playCtrDelegate != null) {
+                  bool oldStateLive = videoController.value.isPlaying;
+                  bool newStateLive = widget.playCtrDelegate
+                      .playVideo(videoController.value.isPlaying);
+                  if (oldStateLive == newStateLive) {
+                    print(" NOT CALL DELEGARE ");
+                    playVideo();
+                  } else {
+                    print(" IS CALL DELEGARE ");
+                  }
                 }
               }
             },
@@ -460,7 +481,8 @@ class _ControlsState extends State<Controls> {
       left: 0.0,
       child: Center(
         child: Container(
-          margin: EdgeInsets.only(left: 20, right: widget.isFullScreen ? 50 : 20),
+          margin:
+              EdgeInsets.only(left: 20, right: widget.isFullScreen ? 50 : 20),
           // color: Colors.black38,
           width: widget.width - 20,
           child: Padding(
@@ -532,7 +554,8 @@ class _ControlsState extends State<Controls> {
                       }
                     },
                     child: Container(
-                      margin: EdgeInsets.only(right: widget.isFullScreen ? 20 : 10),
+                      margin:
+                          EdgeInsets.only(right: widget.isFullScreen ? 20 : 10),
                       child: Align(
                         alignment: Alignment.center,
                         child: Icon(
@@ -617,7 +640,7 @@ class _ControlsState extends State<Controls> {
     return Align(
         alignment: Alignment.topRight,
         child: Padding(
-          padding:  EdgeInsets.only(right: (widget.isFullScreen ? 30 : 10.0)),
+          padding: EdgeInsets.only(right: (widget.isFullScreen ? 30 : 10.0)),
           child: GestureDetector(
               onTap: () {
                 if (widget.playCtrDelegate != null && mounted) {
