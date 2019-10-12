@@ -185,7 +185,7 @@ class _ControlsState extends State<Controls> {
               child: Stack(
                 children: <Widget>[
                   Container(
-                    width: widget.width - 10,
+                    width: widget.width,
                     height: widget.height,
                     child: Center(
                       child: Row(
@@ -412,8 +412,7 @@ class _ControlsState extends State<Controls> {
           children: <Widget>[
             Expanded(
               flex: 1,
-              child: Padding(
-                padding: const EdgeInsets.only(left: 15.0),
+              child: Center(
                 child: Text(
                   _currentPositionString,
                   style: TextStyle(color: Colors.white, fontSize: 12.0),
@@ -450,11 +449,13 @@ class _ControlsState extends State<Controls> {
             ),
             Expanded(
               flex: 1,
-              child: Text(
-                _remainingString,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 12.0,
+              child: Center(
+                child: Text(
+                  _remainingString,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 12.0,
+                  ),
                 ),
               ),
             ),
