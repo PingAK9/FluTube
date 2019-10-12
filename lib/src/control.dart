@@ -309,7 +309,7 @@ class _ControlsState extends State<Controls> {
                       Icon(
                         Icons.fast_forward,
                         size: 40.0,
-                        color: Colors.white,
+                        color: Colors.transparent,
                       ),
                     ],
                   ))
@@ -341,7 +341,7 @@ class _ControlsState extends State<Controls> {
                     child: Icon(
                       Icons.fast_rewind,
                       size: 40.0,
-                      color: Colors.white,
+                      color: Colors.transparent,
                     ),
                     onTap: () {
                       if (widget.playCtrDelegate != null) {
@@ -423,12 +423,14 @@ class _ControlsState extends State<Controls> {
     // int totalLength = 20;
     return Positioned(
       bottom: 10.0,
+      left: 0.0,
       child: Center(
         child: Container(
-          color: Colors.transparent,
-          width: widget.width - 10,
+          margin: EdgeInsets.only(left: 10, right: 10),
+          // color: Colors.black38,
+          width: widget.width - 20,
           child: Padding(
-            padding: EdgeInsets.only(left: 10.0, right: 5.0, bottom: 10.0),
+            padding: EdgeInsets.only( bottom: 10.0),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.spaceBetween,

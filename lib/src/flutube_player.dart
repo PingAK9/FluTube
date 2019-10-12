@@ -224,16 +224,18 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
           allowMuting: widget.allowMuting,
           );
 
-      setState(() {
+      if(mounted){
+        setState(() {
         showControl = false;
       });
+      }
       widget.callBackController(videoController);
       callBackVideoController.callback(videoController);
     });
   }
 
   _playingListener() {
-    if (isPlaying != videoController.value.isPlaying) {
+    if (isPlaying != videoController.value.isPlaying && mounted) {
       setState(() {
         isPlaying = videoController.value.isPlaying;
         widget.callBackController(videoController);
@@ -243,7 +245,7 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
   }
 
   _startListener() {
-    if (videoController.value.initialized && isPlaying) {
+    if (videoController.value.initialized && isPlaying && mounted) {
       callBackVideoController.callback(videoController);
       widget.callBackController(videoController);
       setState(() {
@@ -263,7 +265,7 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
             chewieController.seekTo(Duration());
           }
           if (widget.onVideoEnd != null) widget.onVideoEnd();
-          if (widget.showThumb && !_isPlaylist) {
+          if (widget.showThumb && !_isPlaylist && mounted) {
             setState(() {
               _needsShowThumb = true;
             });
@@ -295,9 +297,12 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
 
   _playlistLoadNext() {
     chewieController?.dispose();
-    setState(() {
+    if(mounted){
+
+      setState(() {
       _currentlyPlaying++;
     });
+    }
     videoController.pause();
     videoController = null;
     _initialize((widget._videourls as List<String>)[_currentlyPlaying]);
@@ -308,9 +313,11 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
 
   _playlistLoop() {
     chewieController?.dispose();
-    setState(() {
+    if(mounted){
+      setState(() {
       _currentlyPlaying = 0;
     });
+    }
     videoController.pause();
     videoController = null;
     _initialize((widget._videourls as List<String>)[0]);
@@ -348,10 +355,12 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
                           Icons.play_arrow,
                         ),
                         onPressed: () {
-                          setState(() {
+                          if(mounted){
+                            setState(() {
                             videoController.play();
                             _needsShowThumb = false;
                           });
+                          }
                         },
                       ),
                     ),
