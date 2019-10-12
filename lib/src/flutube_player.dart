@@ -80,7 +80,11 @@ class FluTube extends StatefulWidget {
   final double height;
 
   FTCallBack callBackController;
+
   PlayControlDelegate playCtrDelegate;
+
+  bool isFullscreen;
+
   FluTube(
     @required String videourl, {
     Key key,
@@ -106,6 +110,7 @@ class FluTube extends StatefulWidget {
     this.width,
     this.height,
     this.playCtrDelegate,
+    this.isFullscreen
   }) : super(key: key) {
     this._videourls = videourl;
   }
@@ -135,6 +140,7 @@ class FluTube extends StatefulWidget {
     this.width,
     this.height,
     this.playCtrDelegate,
+    this.isFullscreen
   }) : super(key: key) {
     assert(playlist.length > 0, 'Playlist should not be empty!');
     this._videourls = playlist;
@@ -240,32 +246,6 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
     if (videoController.value.initialized && isPlaying) {
       callBackVideoController.callback(videoController);
       widget.callBackController(videoController);
-
-      // widget.onVideoStart();
-
-      controls = Controls(
-        playCtrDelegate: widget.playCtrDelegate,
-        width: widget.width,
-        height: widget.height,
-        showControls: false,
-        isFullScreen: _isFullScreen,
-        controlsActiveBackgroundOverlay: false,
-        controlsTimeOut: const Duration(seconds: 3),
-        switchFullScreenOnLongPress: false,
-        controlsShowingCallback: (showing) {
-          Timer(Duration(milliseconds: 600), () {
-            if (mounted)
-              setState(() {
-                showControl = showing;
-                // _showVideoProgressBar = !showing;
-              });
-          });
-        },
-        fullScreenCallback: () async {
-          // await _pushFullScreenWidget(context);
-        },
-        // hideShareButton: widget.hideShareButton,
-      );
       setState(() {
         // _showVideoProgressBar = !showing;
       });
@@ -388,7 +368,7 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
         width: widget.width,
         height: widget.height,
         showControls: false,
-        isFullScreen: _isFullScreen,
+        isFullScreen: widget.isFullscreen,
         controlsActiveBackgroundOverlay: false,
         controlsTimeOut: const Duration(seconds: 2),
         switchFullScreenOnLongPress: false,

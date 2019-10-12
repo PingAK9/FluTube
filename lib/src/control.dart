@@ -55,7 +55,7 @@ class Controls extends StatefulWidget {
     this.defaultQuality = "720p",
     this.fullScreenCallback,
     this.controlsShowingCallback,
-    this.isFullScreen = false,
+    this.isFullScreen,
     this.controlsActiveBackgroundOverlay,
     this.controlsTimeOut,
     this.switchFullScreenOnLongPress,
@@ -153,6 +153,8 @@ class _ControlsState extends State<Controls> {
 
   @override
   Widget build(BuildContext context) {
+    print("--------------- IS FULLSCREEN -------------");
+    print(widget.isFullScreen);
     print("control build");
     return Stack(
       children: <Widget>[
@@ -182,7 +184,6 @@ class _ControlsState extends State<Controls> {
               color: Color(0x88000000),
               child: Stack(
                 children: <Widget>[
-                  _buildAppBar(context),
                   Container(
                     width: widget.width - 10,
                     height: widget.height,
@@ -208,6 +209,7 @@ class _ControlsState extends State<Controls> {
                     ),
                   ),
                   _buildBottomControls(),
+                  Positioned(child: _buildAppBar(context),top: 0,)
                 ],
               ),
             ),
@@ -516,6 +518,7 @@ class _ControlsState extends State<Controls> {
             child: GestureDetector(
               onTap: () {
                 if (widget.playCtrDelegate != null) {
+                  print("------------------- APP BARD ");
                   widget.playCtrDelegate.backButton();
                 }
               },
