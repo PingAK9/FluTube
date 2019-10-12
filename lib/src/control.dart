@@ -3,10 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutube/flutube.dart';
 import 'package:flutube/src/callback_control.dart';
 import 'package:video_player/video_player.dart';
+
 // import '../video_player_controller.dart';
 
 typedef YoutubeQualityChangeCallback(String quality, Duration position);
 typedef ControlsShowingCallback(bool showing);
+const String ICON_PLAY_DETAIL = "assets/images/icons/ic_play_detail.png";
+const String ICON_PAUSE = "assets/images/icons/ic_pause.png";
 
 class ControlsColor {
   final Color timerColor;
@@ -152,10 +155,19 @@ class _ControlsState extends State<Controls> {
           videoController.value.duration.inSeconds;
       _buffering = videoController.value.isBuffering;
       _currentPositionString = formatDuration(videoController.value.position);
-      _remainingString = "- " +
+      _remainingString = 
           formatDuration(
               videoController.value.duration - videoController.value.position);
     });
+  }
+
+  tapLayout() {
+    onTapAction();
+    if (videoController != null &&
+        videoController.value.initialized &&
+        !videoController.value.isPlaying) {
+      videoController.play();
+    }
   }
 
   @override
@@ -172,7 +184,7 @@ class _ControlsState extends State<Controls> {
         GestureDetector(
           onLongPress: () {},
           onTap: () {
-            onTapAction();
+            tapLayout();
           },
           child: AnimatedOpacity(
             opacity: _showControls ? 1.0 : 0.0,
@@ -225,7 +237,9 @@ class _ControlsState extends State<Controls> {
                               children: <Widget>[
                                 Expanded(
                                   child: GestureDetector(
-                                    onTap: onTapAction,
+                                    onTap: () {
+                                      tapLayout();
+                                    },
                                     onDoubleTap: actionFastRewind,
                                     child: Container(
                                       color: Colors.transparent,
@@ -235,7 +249,9 @@ class _ControlsState extends State<Controls> {
                                 ),
                                 Expanded(
                                   child: GestureDetector(
-                                    onTap: onTapAction,
+                                    onTap: () {
+                                      tapLayout();
+                                    },
                                     onDoubleTap: actionFastForward,
                                     child: Container(
                                       color: Colors.transparent,
@@ -384,31 +400,50 @@ class _ControlsState extends State<Controls> {
         borderRadius: BorderRadius.circular(100.0),
         color: Colors.transparent,
         child: GestureDetector(
-          // splashColor: Colors.grey[350],
-          // borderRadius: BorderRadius.circular(30.0),
-          onTap: () {
-            print("Tap Player");
-            onTapAction();
-            if (videoController?.value?.initialized ?? false) {
-              if (videoController.value.isPlaying) {
-                videoController.pause();
-              } else {
-                videoController.play();
+            // splashColor: Colors.grey[350],
+            // borderRadius: BorderRadius.circular(30.0),
+            onTap: () {
+              print("Tap Player");
+              onTapAction();
+              if (videoController?.value?.initialized ?? false) {
+                if (videoController.value.isPlaying) {
+                  videoController.pause();
+                } else {
+                  videoController.play();
+                }
               }
-            }
-          },
-          child: _buffering
-              ? CircularProgressIndicator()
-              : Icon(
-                  (videoController != null &&
-                          videoController.value.initialized &&
-                          videoController.value.isPlaying)
-                      ? Icons.pause
-                      : Icons.play_arrow,
-                  color: Colors.white,
-                  size: 40.0,
-                ),
-        ),
+            },
+            child: _buffering
+                ? CircularProgressIndicator()
+                : ((videoController != null &&
+                        videoController.value.initialized &&
+                        videoController.value.isPlaying)
+                    ? Image.asset(
+                        ICON_PAUSE,
+                        fit: BoxFit.contain,
+                        height: 29,
+                        width: 29,
+                        color: Colors.white,
+                      )
+                    : Image.asset(
+                        ICON_PLAY_DETAIL,
+                        fit: BoxFit.contain,
+                        height: 29,
+                        width: 29,
+                        color: Colors.white,
+                      ))
+
+            // Icon(
+            //     (videoController != null &&
+            //             videoController.value.initialized &&
+            //             videoController.value.isPlaying)
+            //         ? Icons.pause
+            //         : Icons.play_arrow,
+            //     color: Colors.white,
+            //     size: 40.0,
+            //   ),
+
+            ),
       ),
     );
   }
@@ -425,11 +460,11 @@ class _ControlsState extends State<Controls> {
       left: 0.0,
       child: Center(
         child: Container(
-          margin: EdgeInsets.only(left: 10, right: 10),
+          margin: EdgeInsets.only(left: 20, right: widget.isFullScreen ? 50 : 20),
           // color: Colors.black38,
           width: widget.width - 20,
           child: Padding(
-            padding: EdgeInsets.only( bottom: 10.0),
+            padding: EdgeInsets.only(bottom: 10.0),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -496,14 +531,17 @@ class _ControlsState extends State<Controls> {
                         });
                       }
                     },
-                    child: Align(
-                      alignment: Alignment.center,
-                      child: Icon(
-                        widget.isFullScreen
-                            ? Icons.fullscreen_exit
-                            : Icons.fullscreen,
-                        size: 20,
-                        color: Colors.white,
+                    child: Container(
+                      margin: EdgeInsets.only(right: widget.isFullScreen ? 20 : 10),
+                      child: Align(
+                        alignment: Alignment.center,
+                        child: Icon(
+                          widget.isFullScreen
+                              ? Icons.fullscreen_exit
+                              : Icons.fullscreen,
+                          size: 20,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   ),
@@ -579,18 +617,18 @@ class _ControlsState extends State<Controls> {
     return Align(
         alignment: Alignment.topRight,
         child: Padding(
-          padding: const EdgeInsets.only(right: 10.0),
+          padding:  EdgeInsets.only(right: (widget.isFullScreen ? 30 : 10.0)),
           child: GestureDetector(
               onTap: () {
                 if (widget.playCtrDelegate != null) {
                   bool showSub = widget.playCtrDelegate.subvideo(isShowSub);
-                  isShowSub = isShowSub != showSub ? showSub : isShowSub;
+                  isShowSub = (isShowSub != showSub) ? showSub : isShowSub;
                 }
               },
               child: Icon(
                 Icons.subtitles,
                 size: 30.0,
-                color: isShowSub ? Colors.white : Colors.red,
+                color: isShowSub ? Colors.red : Colors.white,
               )),
         ));
   }
