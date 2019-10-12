@@ -3,7 +3,7 @@ abstract class PlayControlDelegate {
   void previousVideo ();
   void playVideo (bool isLive);
   bool fullscreen (bool isFullscreen);
-  void subvideo ();
+  bool subvideo (bool isShowSub);
   void backButton ();
   // void 
 }
