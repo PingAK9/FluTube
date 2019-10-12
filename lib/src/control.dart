@@ -87,7 +87,9 @@ class _ControlsState extends State<Controls> {
     callbackController = CallBackVideoController();
 
     callbackController.callback = (_controller) {
-      if (_controller.value != null && _controller.value.initialized  && mounted) {
+      if (_controller.value != null &&
+          _controller.value.initialized &&
+          mounted) {
         setState(() {
           videoController = _controller;
           if (!flagAddListener && videoController != null) {
@@ -138,7 +140,7 @@ class _ControlsState extends State<Controls> {
       if (videoController.value.position != null &&
           videoController.value.duration != null) {
         if (mounted && videoController.value.isPlaying) {
-           updateTimePostion();
+          updateTimePostion();
         }
       }
     }
@@ -421,90 +423,93 @@ class _ControlsState extends State<Controls> {
     // int totalLength = 20;
     return Positioned(
       bottom: 10.0,
-      child: Container(
-        color: Colors.transparent,
-        width: widget.width,
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: <Widget>[
-            Expanded(
-              flex: 1,
-              child: Center(
-                child: Text(
-                  _currentPositionString,
-                  style: TextStyle(color: Colors.white, fontSize: 12.0),
+      child: Center(
+        child: Container(
+          color: Colors.transparent,
+          width: widget.width - 10,
+          child: Padding(
+            padding: EdgeInsets.only(left: 10.0, right: 5.0, bottom: 10.0),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: <Widget>[
+                Expanded(
+                  flex: 1,
+                  child: Center(
+                    child: Text(
+                      _currentPositionString,
+                      style: TextStyle(color: Colors.white, fontSize: 12.0),
+                    ),
+                  ),
                 ),
-              ),
-            ),
-            Expanded(
-              flex: widget.isFullScreen ? 15 : 6,
-              child: Container(
-                padding: EdgeInsets.only(top: 5),
-                height: 20,
-                child: Slider(
-                  activeColor: Colors.red,
-                  inactiveColor: Colors.grey,
-                  value: currentPosition,
-                  onChanged: (position) {
-                    if (videoController != null) {
-                      onTapAction();
-                      videoController.seekTo(
-                        Duration(
-                          seconds: (position * totalLength).floor(),
-                        ),
-                      );
-                      videoController.play();
-                      if (mounted) {
+                Expanded(
+                  flex: widget.isFullScreen ? 15 : 6,
+                  child: Container(
+                    padding: EdgeInsets.only(top: 5),
+                    height: 20,
+                    child: Slider(
+                      activeColor: Colors.red,
+                      inactiveColor: Colors.grey,
+                      value: currentPosition,
+                      onChanged: (position) {
+                        if (videoController != null) {
+                          onTapAction();
+                          videoController.seekTo(
+                            Duration(
+                              seconds: (position * totalLength).floor(),
+                            ),
+                          );
+                          videoController.play();
+                          if (mounted) {
+                            setState(() {
+                              currentPosition = position;
+                            });
+                          }
+                        }
+                      },
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 1,
+                  child: Center(
+                    child: Text(
+                      _remainingString,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12.0,
+                      ),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 1,
+                  child: InkWell(
+                    onTap: () {
+                      if (widget.playCtrDelegate != null && mounted) {
+                        bool _isFull = widget.playCtrDelegate
+                            .fullscreen(widget.isFullScreen);
                         setState(() {
-                          currentPosition = position;
+                          widget.isFullScreen = _isFull;
                         });
                       }
-                    }
-                  },
-                ),
-              ),
-            ),
-            Expanded(
-              flex: 1,
-              child: Center(
-                child: Text(
-                  _remainingString,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 12.0,
+                    },
+                    child: Align(
+                      alignment: Alignment.center,
+                      child: Icon(
+                        widget.isFullScreen
+                            ? Icons.fullscreen_exit
+                            : Icons.fullscreen,
+                        size: 20,
+                        color: Colors.white,
+                      ),
+                    ),
                   ),
                 ),
-              ),
+              ],
             ),
-            Expanded(
-              flex: 1,
-              child: InkWell(
-                splashColor: Colors.grey[350],
-                onTap: () {
-                  if (widget.playCtrDelegate != null && mounted) {
-                    bool _isFull =
-                        widget.playCtrDelegate.fullscreen(widget.isFullScreen);
-
-                    setState(() {
-                      widget.isFullScreen = _isFull;
-                    });
-                  }
-                },
-                child: Padding(
-                  padding: EdgeInsets.all(widget.isFullScreen ? 10.0 : 5.0),
-                  child: Icon(
-                    widget.isFullScreen
-                        ? Icons.fullscreen_exit
-                        : Icons.fullscreen,
-                    size: 20,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -531,6 +536,7 @@ class _ControlsState extends State<Controls> {
       width: widget.width,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        mainAxisSize: MainAxisSize.max,
         children: <Widget>[
           Align(
               alignment: Alignment.topLeft,
