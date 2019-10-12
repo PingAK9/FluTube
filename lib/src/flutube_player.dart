@@ -7,6 +7,7 @@ import 'package:flutube/src/play_control_delegate.dart';
 import 'package:http/http.dart' as http;
 import 'package:video_player/video_player.dart';
 
+import 'callback_control.dart';
 import 'control.dart';
 import 'control_color.dart';
 
@@ -156,9 +157,11 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
   bool _isFullScreen = false;
   Controls controls;
   bool showControl = false;
+  CallBackVideoController callBackVideoController;
 
   @override
   initState() {
+    callBackVideoController = CallBackVideoController();
     super.initState();
     if (videoController != null) videoController.dispose();
     if (chewieController != null) chewieController.dispose();
@@ -178,16 +181,15 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
     if (videoController != null) videoController.dispose();
     if (chewieController != null) chewieController.dispose();
     widget.callBackController(videoController);
+    callBackVideoController.callback(videoController);
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
-
 
   void _initialize(String _url) {
     _lastUrl = _url;
     print("_url $_url");
     _fetchVideoURL(_url).then((url) {
-
       videoController = VideoPlayerController.network(url)
         ..addListener(_playingListener)
         ..addListener(_errorListener)
@@ -214,12 +216,13 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
           systemOverlaysAfterFullScreen: widget.systemOverlaysAfterFullscreen,
           allowedScreenSleep: widget.allowScreenSleep,
           allowMuting: widget.allowMuting,
-          customControls: controls);
-      
+          );
+
       setState(() {
         showControl = false;
       });
       widget.callBackController(videoController);
+      callBackVideoController.callback(videoController);
     });
   }
 
@@ -228,24 +231,26 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
       setState(() {
         isPlaying = videoController.value.isPlaying;
         widget.callBackController(videoController);
+        callBackVideoController.callback(videoController);
       });
     }
   }
 
   _startListener() {
     if (videoController.value.initialized && isPlaying) {
-      // widget.onVideoStart();
+      callBackVideoController.callback(videoController);
       widget.callBackController(videoController);
-     
+
+      // widget.onVideoStart();
+
       controls = Controls(
         playCtrDelegate: widget.playCtrDelegate,
         width: widget.width,
         height: widget.height,
-        controller: videoController,
         showControls: false,
         isFullScreen: _isFullScreen,
         controlsActiveBackgroundOverlay: false,
-        controlsTimeOut: const Duration(seconds: 2),
+        controlsTimeOut: const Duration(seconds: 3),
         switchFullScreenOnLongPress: false,
         controlsShowingCallback: (showing) {
           Timer(Duration(milliseconds: 600), () {
@@ -266,8 +271,6 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
       });
     }
   }
-
-  
 
   _endListener() {
     // Video end callback
@@ -296,6 +299,7 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
             }
           }
           widget.callBackController(videoController);
+          callBackVideoController.callback(videoController);
         }
       }
     }
@@ -319,6 +323,7 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
     _initialize((widget._videourls as List<String>)[_currentlyPlaying]);
     chewieController.play();
     widget.callBackController(videoController);
+    callBackVideoController.callback(videoController);
   }
 
   _playlistLoop() {
@@ -331,6 +336,7 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
     _initialize((widget._videourls as List<String>)[0]);
     chewieController.play();
     widget.callBackController(videoController);
+    callBackVideoController.callback(videoController);
   }
 
   @override
@@ -377,6 +383,29 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
         ),
       );
     } else {
+      Controls _controls = Controls(
+        playCtrDelegate: widget.playCtrDelegate,
+        width: widget.width,
+        height: widget.height,
+        showControls: false,
+        isFullScreen: _isFullScreen,
+        controlsActiveBackgroundOverlay: false,
+        controlsTimeOut: const Duration(seconds: 2),
+        switchFullScreenOnLongPress: false,
+        controlsShowingCallback: (showing) {
+          Timer(Duration(milliseconds: 600), () {
+            // if (mounted)
+            //   setState(() {
+            //     showControl = showing;
+            //     // _showVideoProgressBar = !showing;
+            //   });
+          });
+        },
+        fullScreenCallback: () async {
+          // await _pushFullScreenWidget(context);
+        },
+        // hideShareButton: widget.hideShareButton,
+      );
       return chewieController != null
           ? Stack(
               children: <Widget>[
@@ -385,13 +414,7 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
                   controller: chewieController,
                   streamSubWidget: widget.subVideo,
                 ),
-                controls ??
-                    AspectRatio(
-                      aspectRatio: widget.aspectRatio,
-                      child: Center(
-                        child: CircularProgressIndicator(),
-                      ),
-                    )
+                _controls ?? Container()
               ],
             )
           : AspectRatio(
@@ -407,6 +430,7 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
     final response = await http.get(yt);
     Iterable parseAll = _allStringMatches(
         response.body, RegExp("\"url_encoded_fmt_stream_map\":\"([^\"]*)\""));
+        
     final Iterable<String> parse =
         _allStringMatches(parseAll.toList()[0], RegExp("url=(.*)"));
     final List<String> urls = parse.toList()[0].split('url=');
@@ -431,7 +455,7 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
     return Controls(
       height: heightCurrent,
       width: widthCurrent,
-      controller: videoController,
+      // controller: videoController,
       showControls: true,
       isFullScreen: _isFullScreen,
       controlsActiveBackgroundOverlay: false,

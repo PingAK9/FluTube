@@ -36,22 +36,19 @@ class Controls extends StatefulWidget {
   final double height;
   final String defaultQuality;
   final bool defaultCall;
-
-  VideoPlayerController controller;
   final VoidCallback fullScreenCallback;
   bool isFullScreen;
   final ControlsShowingCallback controlsShowingCallback;
-  // ControlsColor controlsColor;
   final bool controlsActiveBackgroundOverlay;
   final Duration controlsTimeOut;
-
   final bool switchFullScreenOnLongPress;
   final bool hideShareButton;
   PlayControlDelegate playCtrDelegate;
+  // VideoPlayerController videoController;
 
   Controls({
+    // this.videoController,
     this.showControls,
-    this.controller,
     this.height,
     this.width,
     this.defaultCall,
@@ -59,7 +56,6 @@ class Controls extends StatefulWidget {
     this.fullScreenCallback,
     this.controlsShowingCallback,
     this.isFullScreen = false,
-    // this.controlsColor,
     this.controlsActiveBackgroundOverlay,
     this.controlsTimeOut,
     this.switchFullScreenOnLongPress,
@@ -79,63 +75,80 @@ class _ControlsState extends State<Controls> {
   bool _buffering = false;
   Timer _timer;
   int seekCount = 0;
+  bool flagAddListener = false;
   CallBackVideoController callbackController;
+  VideoPlayerController videoController;
   @override
   void initState() {
     _showControls = widget.showControls ?? true;
     widget.controlsShowingCallback(_showControls);
-    super.initState();
+    // widget.playCtrDelegate = PlayControlDelegate();
     callbackController = CallBackVideoController();
+
     callbackController.callback = (_controller) {
-      if (_controller.value.initialized) {
-        widget.controller = _controller;
+      if (_controller?.value?.initialized ?? false) {
+        setState(() {
+          videoController = _controller;
+          if (!flagAddListener && videoController != null) {
+            flagAddListener = true;
+            videoController.addListener(listener);
+          }
+        });
       }
     };
+    super.initState();
+
     print("[_ControlsState] initState");
   }
 
-  listener() {
-    if (widget.controller.value.initialized) {
-      if (widget.controller.value != null) {
-        if (widget.controller.value.position != null &&
-            widget.controller.value.duration != null) {
-          if (mounted && widget.controller.value.isPlaying) {
-            setState(() {
-              currentPosition =
-                  (widget.controller.value.position.inSeconds ?? 0) /
-                      widget.controller.value.duration.inSeconds;
-              _buffering = widget.controller.value.isBuffering;
-              _currentPositionString =
-                  formatDuration(widget.controller.value.position);
-              _remainingString = "- " +
-                  formatDuration(widget.controller.value.duration -
-                      widget.controller.value.position);
-            });
-          }
-        }
-      }
-    }
-  }
+  // @override
+  // void didUpdateWidget(Controls oldWidget) {
+  //   super.didUpdateWidget(oldWidget);
+  //   if (videoController != null &&
+  //       oldvideoController != null &&
+  //       oldvideoController.value.initialized &&
+  //       videoController.value.initialized) {
+  //     oldvideoController.removeListener(listener);
+  //     videoController.addListener(listener);
+  //   }
+  // }
 
-  @override
-  void didUpdateWidget(Controls oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    // oldWidget.controller.removeListener(listener);
-    // widget.controller.addListener(listener);
-  }
-
-  @override
-  void deactivate() {
-    // widget.controller.removeListener(listener);
-    super.deactivate();
-  }
+  // @override
+  // void deactivate() {
+  //   if (videoController != null &&
+  //       videoController.value.initialized) {
+  //     videoController.removeListener(listener);
+  //   }
+  //   super.deactivate();
+  // }
 
   @override
   void dispose() {
     if (!widget.isFullScreen) {
-      // widget.controller?.setVolume(0);
+      videoController?.setVolume(0);
     }
     super.dispose();
+  }
+
+  listener() {
+    if (videoController != null && videoController.value.initialized) {
+      // print(" Starting ... ");
+      if (videoController.value.position != null &&
+          videoController.value.duration != null) {
+        if (mounted && videoController.value.isPlaying) {
+          setState(() {
+            currentPosition = (videoController.value.position.inSeconds ?? 0) /
+                videoController.value.duration.inSeconds;
+            _buffering = videoController.value.isBuffering;
+            _currentPositionString =
+                formatDuration(videoController.value.position);
+            _remainingString = "- " +
+                formatDuration(videoController.value.duration -
+                    videoController.value.position);
+          });
+        }
+      }
+    }
   }
 
   @override
@@ -158,13 +171,6 @@ class _ControlsState extends State<Controls> {
             //       : widget.fullScreenCallback();
           },
           onTap: () {
-            print(">>>>>>>>>>>>>>>>> TAP");
-            if (mounted) {
-              setState(() {
-                _showControls = false;
-                widget.controlsShowingCallback(_showControls);
-              });
-            }
             if (!_buffering) {
               togglePlaying();
             }
@@ -218,21 +224,24 @@ class _ControlsState extends State<Controls> {
           onTap: onTapAction,
           onDoubleTap: () {
             if (mounted) {
-              setState(() {
-                widget.controlsShowingCallback(_showControls);
-                seekCount += 10;
-              });
-              // widget.controller.seekTo(
-              //   Duration(
-              //       seconds: widget.controller.value.position.inSeconds + 5),
-              // );
-              Timer(Duration(seconds: 2), () {
-                if (mounted) {
-                  setState(() {
-                    seekCount = 0;
-                  });
-                }
-              });
+              if (videoController != null) {
+                print("------- double _fastForward -------");
+                setState(() {
+                  // widget.controlsShowingCallback(_showControls);
+                  seekCount += 10;
+                });
+                videoController.seekTo(
+                  Duration(
+                      seconds: videoController.value.position.inSeconds + 5),
+                );
+                Timer(Duration(seconds: 2), () {
+                  if (mounted) {
+                    setState(() {
+                      seekCount = 0;
+                    });
+                  }
+                });
+              }
             }
           },
           child: Container(
@@ -245,6 +254,7 @@ class _ControlsState extends State<Controls> {
           child: GestureDetector(
             onTap: () {
 //                printLog("Tap _fastForward");
+              print("------- tap _fastForward -------");
               if (widget.playCtrDelegate != null) {
                 widget.playCtrDelegate.nextVideo();
               }
@@ -275,21 +285,23 @@ class _ControlsState extends State<Controls> {
           onTap: onTapAction,
           onDoubleTap: () {
             if (mounted) {
-              setState(() {
-                widget.controlsShowingCallback(_showControls);
-                seekCount += 10;
-              });
-              // widget.controller.seekTo(
-              //   Duration(
-              //       seconds: widget.controller.value.position.inSeconds - 5),
-              // );
-              Timer(Duration(seconds: 2), () {
-                if (mounted) {
-                  setState(() {
-                    seekCount = 0;
-                  });
-                }
-              });
+              if (videoController != null) {
+                print("------- double _rewind -------");
+                setState(() {
+                  seekCount += 10;
+                });
+                videoController.seekTo(
+                  Duration(
+                      seconds: videoController.value.position.inSeconds - 5),
+                );
+                Timer(Duration(seconds: 2), () {
+                  if (mounted) {
+                    setState(() {
+                      seekCount = 0;
+                    });
+                  }
+                });
+              }
             }
           },
           child: Container(
@@ -299,22 +311,21 @@ class _ControlsState extends State<Controls> {
         Center(
           child: GestureDetector(
             onTap: () {
-//                printLog("Tap _rewind");
-              if (widget.playCtrDelegate != null) {
-                widget.playCtrDelegate.previousVideo();
-              }
+              print("Tap _rewind");
             },
             child: _showControls
                 ? Center(
-                    child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: <Widget>[
-                      Icon(
-                        Icons.fast_rewind,
-                        size: 40.0,
-                        color: Colors.white,
-                      ),
-                    ],
+                    child: GestureDetector(
+                    child: Icon(
+                      Icons.fast_rewind,
+                      size: 40.0,
+                      color: Colors.white,
+                    ),
+                    onTap: () {
+                      if (widget.playCtrDelegate != null) {
+                        widget.playCtrDelegate.previousVideo();
+                      }
+                    },
                   ))
                 : Container(),
           ),
@@ -327,11 +338,11 @@ class _ControlsState extends State<Controls> {
     if (_timer != null) _timer.cancel();
     if (mounted) {
       setState(() {
-        _showControls = !_showControls;
+        _showControls = true;
         widget.controlsShowingCallback(_showControls);
       });
     }
-    if (_showControls) {      
+    if (_showControls) {
       _timer = Timer(widget.controlsTimeOut, () {
         if (mounted) {
           setState(() {
@@ -341,7 +352,7 @@ class _ControlsState extends State<Controls> {
         }
       });
     }
-    // if (!widget.controller.value.isPlaying) widget.controller.play();
+    // if (!videoController.value.isPlaying) videoController.play();
   }
 
   Widget _playButton() {
@@ -350,25 +361,25 @@ class _ControlsState extends State<Controls> {
       child: Material(
         borderRadius: BorderRadius.circular(100.0),
         color: Colors.transparent,
-        child: InkWell(
-          splashColor: Colors.grey[350],
-          borderRadius: BorderRadius.circular(100.0),
+        child: GestureDetector(
+          // splashColor: Colors.grey[350],
+          // borderRadius: BorderRadius.circular(30.0),
           onTap: () {
-
-            if (mounted) {
-              setState(() {
-                _showControls = false;
-                widget.controlsShowingCallback(_showControls);
-              });
-            }
-            if (!_buffering) {
-              togglePlaying();
+            onTapAction();
+            if (videoController?.value?.initialized ?? false) {
+              if (videoController.value.isPlaying) {
+                videoController.pause();
+              } else {
+                videoController.play();
+              }
             }
           },
           child: _buffering
               ? CircularProgressIndicator()
               : Icon(
-                  widget.controller.value.isPlaying
+                  (videoController != null &&
+                          videoController.value.initialized &&
+                          videoController.value.isPlaying)
                       ? Icons.pause
                       : Icons.play_arrow,
                   color: Colors.white,
@@ -380,8 +391,13 @@ class _ControlsState extends State<Controls> {
   }
 
   Widget _buildBottomControls() {
-    // int totalLength = widget.controller.value.duration.inSeconds ?? 0;
-    int totalLength = 20;
+    int totalLength = 0;
+
+    if (videoController != null && videoController.value.initialized) {
+      totalLength = videoController.value.duration.inSeconds;
+    }
+    // total
+    // int totalLength = 20;
     return Positioned(
       bottom: 10.0,
       child: Container(
@@ -392,14 +408,18 @@ class _ControlsState extends State<Controls> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
-            Padding(
-              padding: const EdgeInsets.only(left: 10.0),
-              child: Text(
-                _currentPositionString,
-                style: TextStyle(color: Colors.white, fontSize: 12.0),
+            Expanded(
+              flex: 1,
+              child: Padding(
+                padding: const EdgeInsets.only(left: 15.0),
+                child: Text(
+                  _currentPositionString,
+                  style: TextStyle(color: Colors.white, fontSize: 12.0),
+                ),
               ),
             ),
             Expanded(
+              flex: widget.isFullScreen ? 15 :6,
               child: Container(
                 padding: EdgeInsets.only(top: 5),
                 height: 20,
@@ -408,46 +428,57 @@ class _ControlsState extends State<Controls> {
                   inactiveColor: Colors.grey,
                   value: currentPosition,
                   onChanged: (position) {
-                    if (mounted) {
-                      setState(() {
-                        currentPosition = position;
-                      });
+                    if (videoController != null) {
+                      togglePlaying();
+                      videoController.seekTo(
+                        Duration(
+                          seconds: (position * totalLength).floor(),
+                        ),
+                      );
+                      videoController.play();
+                      if (mounted) {
+                        setState(() {
+                          currentPosition = position;
+                        });
+                      }
                     }
-                    // widget.controller.seekTo(
-                    //   Duration(
-                    //     seconds: (position * totalLength).floor(),
-                    //   ),
-                    // );
-                    // widget.controller.play();
                   },
                 ),
               ),
             ),
-            Text(
-              _remainingString,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 12.0,
+            Expanded(
+              flex: 1,
+              child: Text(
+                _remainingString,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 12.0,
+                ),
               ),
             ),
-            InkWell(
-              splashColor: Colors.grey[350],
-              onTap: () {
-                if (widget.playCtrDelegate != null) {
-                  bool _isFull =
-                      widget.playCtrDelegate.fullscreen(widget.isFullScreen);
-                  setState(() {
-                    widget.isFullScreen = _isFull;
-                  });
-                }
-              },
-              child: Padding(
-                padding: EdgeInsets.all(widget.width <= 200 ? 4.0 : 10.0),
-                child: Icon(
-                  widget.isFullScreen
-                      ? Icons.fullscreen_exit
-                      : Icons.fullscreen,
-                  color: Colors.white,
+            Expanded(
+              flex: 1,
+              child: InkWell(
+                splashColor: Colors.grey[350],
+                onTap: () {
+                  if (widget.playCtrDelegate != null) {
+                    bool _isFull =
+                        widget.playCtrDelegate.fullscreen(widget.isFullScreen);
+
+                    setState(() {
+                      widget.isFullScreen = _isFull;
+                    });
+                  }
+                },
+                child: Padding(
+                  padding: EdgeInsets.all(widget.width <= 200 ? 4.0 : 10.0),
+                  child: Icon(
+                    widget.isFullScreen
+                        ? Icons.fullscreen_exit
+                        : Icons.fullscreen,
+                        size: 20,
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ),
@@ -458,20 +489,22 @@ class _ControlsState extends State<Controls> {
   }
 
   void togglePlaying() {
-    if(widget.playCtrDelegate != null){
-      widget.playCtrDelegate.playVideo(widget.controller.value.isPlaying);
-    }
-    // if (widget.controller.value.isPlaying == true) {
-    //   // widget.controller.pause();
-    //   if (mounted) {
-    //     setState(() {
-    //       _showControls = true;
-    //       widget.controlsShowingCallback(_showControls);
-    //     });
-    //   }
-    // } else {
-    //   // widget.controller.play();
+    // if (videoController!= null && widget.playCtrDelegate != null) {
+    //   widget.playCtrDelegate.playVideo(videoController.value.isPlaying);
     // }
+    if (videoController != null && videoController.value.initialized) {
+      if (videoController.value.isPlaying == true) {
+        videoController.pause();
+        if (mounted) {
+          setState(() {
+            _showControls = true;
+            widget.controlsShowingCallback(_showControls);
+          });
+        }
+      } else {
+        videoController.play();
+      }
+    }
   }
 
   Widget _buildAppBar(BuildContext context) {
@@ -482,7 +515,9 @@ class _ControlsState extends State<Controls> {
             alignment: Alignment.topLeft,
             child: GestureDetector(
               onTap: () {
-                Navigator.pop(context);
+                if (widget.playCtrDelegate != null) {
+                  widget.playCtrDelegate.backButton();
+                }
               },
               child: Container(
                 child: Row(

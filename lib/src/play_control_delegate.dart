@@ -4,5 +4,6 @@ abstract class PlayControlDelegate {
   void playVideo (bool isLive);
   bool fullscreen (bool isFullscreen);
   void subvideo ();
+  void backButton ();
   // void 
 }
