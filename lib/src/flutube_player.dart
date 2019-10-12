@@ -248,9 +248,6 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
     if (videoController.value.initialized && isPlaying && mounted) {
       callBackVideoController.callback(videoController);
       widget.callBackController(videoController);
-      setState(() {
-        // _showVideoProgressBar = !showing;
-      });
     }
   }
 

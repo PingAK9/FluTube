@@ -71,7 +71,7 @@ class _ControlsState extends State<Controls> {
   bool _showControls;
   double currentPosition = 0;
   String _currentPositionString = "00:00";
-  String _remainingString = "- 00:00";
+  String _remainingString = "00:00";
   bool _buffering = false;
   Timer _timer;
   int seekCount = 0;
@@ -419,8 +419,7 @@ class _ControlsState extends State<Controls> {
     if (videoController != null && videoController.value.initialized) {
       totalLength = videoController.value.duration.inSeconds;
     }
-    // total
-    // int totalLength = 20;
+
     return Positioned(
       bottom: 10.0,
       left: 0.0,
