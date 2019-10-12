@@ -456,7 +456,7 @@ class _ControlsState extends State<Controls> {
     }
 
     return Positioned(
-      bottom: 10.0,
+      bottom: 5.0,
       left: 0.0,
       child: Center(
         child: Container(
@@ -620,9 +620,11 @@ class _ControlsState extends State<Controls> {
           padding:  EdgeInsets.only(right: (widget.isFullScreen ? 30 : 10.0)),
           child: GestureDetector(
               onTap: () {
-                if (widget.playCtrDelegate != null) {
-                  bool showSub = widget.playCtrDelegate.subvideo(isShowSub);
-                  isShowSub = (isShowSub != showSub) ? showSub : isShowSub;
+                if (widget.playCtrDelegate != null && mounted) {
+                  setState(() {
+                    isShowSub = widget.playCtrDelegate.subvideo(isShowSub);
+                  });
+                  // isShowSub = (isShowSub != showSub) ? showSub : isShowSub;
                 }
               },
               child: Icon(
