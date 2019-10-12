@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutube/flutube.dart';
 import 'package:flutube/src/callback_control.dart';
-import 'package:screen/screen.dart';
 import 'package:video_player/video_player.dart';
 
 // import '../video_player_controller.dart';
@@ -115,10 +114,8 @@ class _ControlsState extends State<Controls> {
     if (videoController != null && videoController.value.initialized) {
       if (videoController.value.isPlaying) {
         videoController.pause();
-        Screen.keepOn(false);
       } else {
         videoController.play();
-        Screen.keepOn(true);
       }
     }
   }
@@ -152,14 +149,22 @@ class _ControlsState extends State<Controls> {
     super.dispose();
   }
 
-  listener() {
+  listener() async {
     if (videoController != null && videoController.value.initialized) {
       // print(" Starting ... ");
       if (videoController.value.position != null &&
           videoController.value.duration != null) {
         if (mounted && videoController.value.isPlaying) {
           updateTimePostion();
+          
         }
+        // if(videoController.value.isPlaying)
+        // {
+        //   bool isKeptOn = await Screen.isKeptOn;
+        //   if (!isKeptOn) {
+        //     Screen.keepOn(true);
+        //   }
+        // }
       }
     }
   }
