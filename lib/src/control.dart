@@ -93,9 +93,7 @@ class _ControlsState extends State<Controls> {
     callbackController = CallBackVideoController();
 
     callbackController.callback = (_controller) {
-      if (_controller.value != null &&
-          _controller.value.initialized &&
-          mounted) {
+      if (_controller != null && _controller.value.initialized && mounted) {
         setState(() {
           videoController = _controller;
           if (!flagAddListener && videoController != null) {
@@ -105,6 +103,7 @@ class _ControlsState extends State<Controls> {
         });
       }
     };
+    onTapAction();
     super.initState();
 
     print("[_ControlsState] initState");
@@ -146,6 +145,7 @@ class _ControlsState extends State<Controls> {
       videoController?.setVolume(0);
     }
     videoController.removeListener(listener);
+    // if (videoController != null) videoController.dispose();
     super.dispose();
   }
 
@@ -206,13 +206,13 @@ class _ControlsState extends State<Controls> {
             tapLayout();
           },
           child: AnimatedOpacity(
-            opacity: _showControls ? 1.0 : 0.0,
+            opacity: (_showControls || (videoController == null || !videoController.value.initialized)) ? 1.0 : 0.0,
             duration: Duration(milliseconds: 300),
             child: Material(
               color: Color(0x88000000),
               child: Stack(
                 children: <Widget>[
-                  _showControls
+                  (_showControls || videoController == null || !videoController.value.initialized)
                       ? Stack(
                           children: <Widget>[
                             Container(
@@ -394,84 +394,91 @@ class _ControlsState extends State<Controls> {
   void onTapAction() {
     if (_timer != null) _timer.cancel();
     if (mounted) {
-      setState(() {
-        _showControls = true;
-        widget.controlsShowingCallback(_showControls);
-      });
-    }
-    if (_showControls) {
-      _timer = Timer(widget.controlsTimeOut, () {
-        if (mounted) {
+      if (!_showControls) {
+        setState(() {
+          _showControls = true;
+          widget.controlsShowingCallback(_showControls);
+        });
+      } else {
+        _timer = Timer(widget.controlsTimeOut, () {
           setState(() {
             _showControls = false;
             widget.controlsShowingCallback(_showControls);
           });
-        }
-      });
+        });
+      }
     }
+
     // if (!videoController.value.isPlaying) videoController.play();
   }
 
   Widget _playButton() {
-    return IgnorePointer(
-      ignoring: !_showControls,
-      child: Material(
-        borderRadius: BorderRadius.circular(100.0),
-        color: Colors.transparent,
-        child: GestureDetector(
-            // splashColor: Colors.grey[350],
-            // borderRadius: BorderRadius.circular(30.0),
-            onTap: () {
-              print("Tap Player");
-              onTapAction();
+    return (videoController != null && videoController.value.initialized)
+        ? IgnorePointer(
+            ignoring: !_showControls,
+            child: Material(
+              borderRadius: BorderRadius.circular(100.0),
+              color: Colors.transparent,
+              child: GestureDetector(
+                  // splashColor: Colors.grey[350],
+                  // borderRadius: BorderRadius.circular(30.0),
+                  onTap: () {
+                    print("Tap Player");
+                    onTapAction();
 
-              if (videoController?.value?.initialized ?? false) {
-                if (widget.playCtrDelegate != null) {
-                  bool oldStateLive = videoController.value.isPlaying;
-                  bool newStateLive = widget.playCtrDelegate
-                      .playVideo(videoController.value.isPlaying);
-                  if (oldStateLive == newStateLive) {
-                    print(" NOT CALL DELEGARE ");
-                    playVideo();
-                  } else {
-                    print(" IS CALL DELEGARE ");
-                  }
-                }
-              }
-            },
-            child: _buffering
-                ? CircularProgressIndicator()
-                : ((videoController != null &&
-                        videoController.value.initialized &&
-                        videoController.value.isPlaying)
-                    ? Image.asset(
-                        ICON_PAUSE,
-                        fit: BoxFit.contain,
-                        height: 29,
-                        width: 29,
-                        color: Colors.white,
-                      )
-                    : Image.asset(
-                        ICON_PLAY_DETAIL,
-                        fit: BoxFit.contain,
-                        height: 29,
-                        width: 29,
-                        color: Colors.white,
-                      ))
+                    if (videoController?.value?.initialized ?? false) {
+                      if (widget.playCtrDelegate != null) {
+                        bool oldStateLive = videoController.value.isPlaying;
+                        bool newStateLive = widget.playCtrDelegate
+                            .playVideo(videoController.value.isPlaying);
+                        if (oldStateLive == newStateLive) {
+                          print(" NOT CALL DELEGARE ");
+                          playVideo();
+                        } else {
+                          print(" IS CALL DELEGARE ");
+                        }
+                      }
+                    }
+                  },
+                  child: _buffering
+                      ? CircularProgressIndicator()
+                      : ((videoController != null &&
+                              videoController.value.initialized &&
+                              videoController.value.isPlaying)
+                          ? Image.asset(
+                              ICON_PAUSE,
+                              fit: BoxFit.contain,
+                              height: 29,
+                              width: 29,
+                              color: Colors.white,
+                            )
+                          : Image.asset(
+                              ICON_PLAY_DETAIL,
+                              fit: BoxFit.contain,
+                              height: 29,
+                              width: 29,
+                              color: Colors.white,
+                            ))
 
-            // Icon(
-            //     (videoController != null &&
-            //             videoController.value.initialized &&
-            //             videoController.value.isPlaying)
-            //         ? Icons.pause
-            //         : Icons.play_arrow,
-            //     color: Colors.white,
-            //     size: 40.0,
-            //   ),
+                  // Icon(
+                  //     (videoController != null &&
+                  //             videoController.value.initialized &&
+                  //             videoController.value.isPlaying)
+                  //         ? Icons.pause
+                  //         : Icons.play_arrow,
+                  //     color: Colors.white,
+                  //     size: 40.0,
+                  //   ),
 
+                  ),
             ),
-      ),
-    );
+          )
+        : AspectRatio(
+            aspectRatio: 16 / 9,
+            child: Center(
+              child: CircularProgressIndicator(),
+            ),
+          );
   }
 
   Widget _buildBottomControls() {
@@ -648,7 +655,7 @@ class _ControlsState extends State<Controls> {
           padding: EdgeInsets.only(right: (widget.isFullScreen ? 30 : 10.0)),
           child: GestureDetector(
               onTap: () {
-                if (widget.playCtrDelegate != null && mounted) {
+                if (videoController!=null && videoController.value.initialized && widget.playCtrDelegate != null && mounted) {
                   setState(() {
                     isShowSub = widget.playCtrDelegate.subvideo(isShowSub);
                   });
