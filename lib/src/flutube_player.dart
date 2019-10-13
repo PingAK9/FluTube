@@ -9,13 +9,14 @@ import 'package:video_player/video_player.dart';
 
 import 'callback_control.dart';
 import 'control.dart';
-import 'control_color.dart';
 
 typedef FTCallBack(VideoPlayerController controller);
 
 class FluTube extends StatefulWidget {
   /// Youtube video URL(s)
   var _videourls;
+
+  var _idVideo;
 
   /// Initialize the Video on Startup. This will prep the video for playback.
   final bool autoInitialize;
@@ -111,7 +112,8 @@ class FluTube extends StatefulWidget {
       this.playCtrDelegate,
       this.isFullscreen})
       : super(key: key) {
-    this._videourls = videourl;
+    this._videourls = "https://www.youtube.com/watch?v=" + videourl;
+    this._idVideo = videourl;
   }
 
   FluTube.playlist(@required List<String> playlist,
@@ -142,6 +144,7 @@ class FluTube extends StatefulWidget {
       : super(key: key) {
     assert(playlist.length > 0, 'Playlist should not be empty!');
     this._videourls = playlist;
+    this._idVideo = "";
   }
 
   @override
@@ -162,48 +165,62 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
   Controls controls;
   bool showControl = false;
   CallBackVideoController callBackVideoController;
+  StatePlaying statePlaying;
 
   @override
   initState() {
-    callBackVideoController = CallBackVideoController();
     super.initState();
-    if (videoController != null) videoController.dispose();
-    if (chewieController != null) chewieController.dispose();
-//    controls = Controls();
-    _needsShowThumb = !widget.autoPlay;
+    try {
+      if (videoController != null) {
+        disposeController("initState");
+      }
+      if (chewieController != null) {
+        chewieController.dispose();
+      }
+    } catch (e) {}
+    callBackVideoController = CallBackVideoController();
+    statePlaying = StatePlaying();
 
+    _needsShowThumb = !widget.autoPlay;
     if (_isPlaylist) {
       _initialize((widget._videourls
           as List<String>)[0]); // Play the very first video of the playlist
     } else {
       _initialize(widget._videourls as String);
+      statePlaying.idPlaying = widget._idVideo;
     }
   }
 
   @override
   void dispose() {
-    // if (videoController != null) videoController.dispose();
-    // if (chewieController != null) chewieController.dispose();
-    // widget.callBackController(videoController);
-    // callBackVideoController.callback(videoController);
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
+  disposeController(String func_name) {
+    try {
+      if (videoController != null &&
+          statePlaying.idPlaying != null &&
+          statePlaying.idPlaying != widget._idVideo) {
+        videoController.removeListener(_playingListener);
+        videoController.removeListener(_errorListener);
+        videoController.removeListener(_endListener);
+        videoController.removeListener(_startListener);
+        videoController.dispose();
+      }
+    } catch (e) {}
+  }
+
   void _initialize(String _url) {
-    _lastUrl = _url;
-    print("_url $_url");
-    _fetchVideoURL(_url).then((url) {
+    _lastUrl = "asda"+_url+"ghg";
+    // print("_url $_url");
+    _fetchVideoURL(_lastUrl).then((url) {
       videoController = VideoPlayerController.network(url)
         ..addListener(_playingListener)
         ..addListener(_errorListener)
         ..addListener(_endListener)
         ..addListener(_startListener);
 
-      // Video start callback
-      // if (widget.onVideoStart != null) {
-      //   videoController.addListener(_startListener);
-      // }
       chewieController = ChewieController(
         videoPlayerController: videoController,
         aspectRatio: widget.aspectRatio,
@@ -222,11 +239,6 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
         allowMuting: widget.allowMuting,
       );
 
-      if (mounted) {
-        setState(() {
-          showControl = false;
-        });
-      }
       if (videoController != null && videoController.value.initialized) {
         callBackVideoController.callback(videoController);
         widget.callBackController(videoController);
@@ -245,6 +257,10 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
   }
 
   _startListener() {
+    if (statePlaying.idPlaying != null &&
+        statePlaying.idPlaying != widget._idVideo) {
+      videoController.pause();
+    }
     if (videoController.value.initialized && isPlaying && mounted) {
       callBackVideoController.callback(videoController);
       widget.callBackController(videoController);
@@ -252,7 +268,6 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
   }
 
   _endListener() {
-    // Video end callback
     if (videoController != null) {
       if (videoController.value.initialized &&
           !videoController.value.isBuffering) {
@@ -286,10 +301,9 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
 
   _errorListener() {
     if (!videoController.value.hasError) return;
-    print("_errorListener $_lastUrl");
-//    if (videoController.value.errorDescription.contains("code: 403"))
-//      _initialize(_lastUrl);
-    _initialize(_lastUrl);
+   if (videoController.value.errorDescription.contains("code: 403"))
+     _initialize(_lastUrl);
+
   }
 
   _playlistLoadNext() {
@@ -303,8 +317,6 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
     videoController = null;
     _initialize((widget._videourls as List<String>)[_currentlyPlaying]);
     chewieController.play();
-    widget.callBackController(videoController);
-    callBackVideoController.callback(videoController);
   }
 
   _playlistLoop() {
@@ -318,8 +330,6 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
     videoController = null;
     _initialize((widget._videourls as List<String>)[0]);
     chewieController.play();
-    widget.callBackController(videoController);
-    callBackVideoController.callback(videoController);
   }
 
   @override
@@ -414,8 +424,7 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
 
     final List<String> urls = parse.toList()[0].split('url=');
     parseAll = _allStringMatches(urls[1], RegExp("([^&,]*)[&,]"));
-    if(parseAll.isEmpty)
-      parseAll = [urls[1]];
+    if (parseAll.isEmpty) parseAll = [urls[1]];
 
     String finalUrl = Uri.decodeFull(parseAll.toList()[0]);
     if (finalUrl.indexOf('\\u00') > -1)

@@ -21,3 +21,15 @@ class EventControl {
   }
   EventControl._internal();
 }
+
+class StatePlaying {
+  static StatePlaying instance;
+
+  String idPlaying;
+
+  factory StatePlaying() {
+    if (instance == null) instance = StatePlaying._internal();
+    return instance;
+  }
+  StatePlaying._internal();
+}

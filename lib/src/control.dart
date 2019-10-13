@@ -143,12 +143,11 @@ class _ControlsState extends State<Controls> {
       videoController?.setVolume(0);
     }
     videoController.removeListener(listener);
-    // if (videoController != null) videoController.dispose();
+    if (videoController != null) videoController.dispose();
     super.dispose();
   }
 
   listener() async {
-    print("----------listen...!");
     if (videoController != null && videoController.value.initialized) {
       // print(" Starting ... ");
       if (videoController.value.position != null &&
