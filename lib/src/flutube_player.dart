@@ -212,9 +212,8 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
   }
 
   void _initialize(String _url) {
-    _lastUrl = "asda"+_url+"ghg";
     // print("_url $_url");
-    _fetchVideoURL(_lastUrl).then((url) {
+    _fetchVideoURL(_url).then((url) {
       videoController = VideoPlayerController.network(url)
         ..addListener(_playingListener)
         ..addListener(_errorListener)
