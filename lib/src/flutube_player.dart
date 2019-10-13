@@ -249,8 +249,6 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
     if (isPlaying != videoController.value.isPlaying && mounted) {
       setState(() {
         isPlaying = videoController.value.isPlaying;
-        widget.callBackController(videoController);
-        callBackVideoController.callback(videoController);
       });
     }
   }
@@ -260,7 +258,7 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
         statePlaying.idPlaying != widget._idVideo) {
       videoController.pause();
     }
-    if (videoController.value.initialized && isPlaying && mounted) {
+    if (videoController.value.initialized && mounted) {
       callBackVideoController.callback(videoController);
       widget.callBackController(videoController);
     }
@@ -300,9 +298,13 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
 
   _errorListener() {
     if (!videoController.value.hasError) return;
-   if (videoController.value.errorDescription.contains("code: 403"))
-     _initialize(_lastUrl);
-
+    if (statePlaying.idPlaying == widget._idVideo) {
+      Timer(Duration(seconds: 3), () {
+        if (mounted) {
+          _initialize(widget._videourls as String);
+        }
+      });
+    }
   }
 
   _playlistLoadNext() {
