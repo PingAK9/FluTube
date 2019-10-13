@@ -414,6 +414,8 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
 
     final List<String> urls = parse.toList()[0].split('url=');
     parseAll = _allStringMatches(urls[1], RegExp("([^&,]*)[&,]"));
+    if(parseAll.isEmpty)
+      parseAll = [urls[1]];
 
     String finalUrl = Uri.decodeFull(parseAll.toList()[0]);
     if (finalUrl.indexOf('\\u00') > -1)
