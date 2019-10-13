@@ -324,7 +324,6 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    print(_currentlyPlaying);
     if (widget.showThumb && !isPlaying && _needsShowThumb) {
       return Center(
         child: Container(
@@ -410,29 +409,15 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
     final response = await http.get(yt);
     Iterable parseAll = _allStringMatches(
         response.body, RegExp("\"url_encoded_fmt_stream_map\":\"([^\"]*)\""));
-    print(
-        "----------                    _fetchVideoURL                     ----------");
-    print("parseAll");
-    print(parseAll);
     final Iterable<String> parse =
         _allStringMatches(parseAll.toList()[0], RegExp("url=(.*)"));
-    print("parse");
-    print(parse);
 
     final List<String> urls = parse.toList()[0].split('url=');
-    print("urls");
-    print(urls);
     parseAll = _allStringMatches(urls[1], RegExp("([^&,]*)[&,]"));
-    print("parseAll");
-    print(parseAll);
 
     String finalUrl = Uri.decodeFull(parseAll.toList()[0]);
-    print("finalUrl");
-    print(finalUrl);
     if (finalUrl.indexOf('\\u00') > -1)
       finalUrl = finalUrl.substring(0, finalUrl.indexOf('\\u00'));
-    print("finalUrl");
-    print(finalUrl);
 
     return finalUrl;
   }

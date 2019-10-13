@@ -122,22 +122,20 @@ class _ControlsState extends State<Controls> {
   // void didUpdateWidget(Controls oldWidget) {
   //   super.didUpdateWidget(oldWidget);
   //   if (videoController != null &&
-  //       oldvideoController != null &&
-  //       oldvideoController.value.initialized &&
+  //       oldWidget != null &&
   //       videoController.value.initialized) {
-  //     oldvideoController.removeListener(listener);
+  //     oldWidget.videoController.removeListener(listener);
   //     videoController.addListener(listener);
   //   }
   // }
 
-  // @override
-  // void deactivate() {
-  //   if (videoController != null &&
-  //       videoController.value.initialized) {
-  //     videoController.removeListener(listener);
-  //   }
-  //   super.deactivate();
-  // }
+  @override
+  void deactivate() {
+    if (videoController != null && videoController.value.initialized) {
+      videoController.removeListener(listener);
+    }
+    super.deactivate();
+  }
 
   @override
   void dispose() {
@@ -150,13 +148,13 @@ class _ControlsState extends State<Controls> {
   }
 
   listener() async {
+    print("----------listen...!");
     if (videoController != null && videoController.value.initialized) {
       // print(" Starting ... ");
       if (videoController.value.position != null &&
           videoController.value.duration != null) {
         if (mounted && videoController.value.isPlaying) {
           updateTimePostion();
-          
         }
         // if(videoController.value.isPlaying)
         // {
@@ -394,21 +392,21 @@ class _ControlsState extends State<Controls> {
   void onTapAction() {
     if (_timer != null) _timer.cancel();
     if (mounted) {
-      if (!_showControls) {
-        setState(() {
-          _showControls = true;
-          widget.controlsShowingCallback(_showControls);
-        });
-      } else {
-        _timer = Timer(widget.controlsTimeOut, () {
+      setState(() {
+        _showControls = true;
+        widget.controlsShowingCallback(_showControls);
+      });
+    }
+    if (_showControls) {
+      _timer = Timer(widget.controlsTimeOut, () {
+        if (mounted) {
           setState(() {
             _showControls = false;
             widget.controlsShowingCallback(_showControls);
           });
-        });
-      }
+        }
+      });
     }
-
     // if (!videoController.value.isPlaying) videoController.play();
   }
 
