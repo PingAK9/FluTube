@@ -556,9 +556,9 @@ class _ControlsState extends State<Controls> {
                 Expanded(
                   flex: 1,
                   child: InkWell(
-                    onTap: () {
+                    onTap: () async{
                       if (widget.playCtrDelegate != null && mounted) {
-                        bool _isFull = widget.playCtrDelegate
+                        bool _isFull = await widget.playCtrDelegate
                             .fullscreen(widget.isFullScreen);
                         setState(() {
                           widget.isFullScreen = _isFull;
