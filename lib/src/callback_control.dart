@@ -33,3 +33,15 @@ class StatePlaying {
   }
   StatePlaying._internal();
 }
+enum FlutubeState { ON, OFF } 
+class StatePlayer {
+  static StatePlayer instance;
+
+  FlutubeState statePlayer;
+
+  factory StatePlayer() {
+    if (instance == null) instance = StatePlayer._internal();
+    return instance;
+  }
+  StatePlayer._internal();
+}

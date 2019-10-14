@@ -98,7 +98,7 @@ class _ControlsState extends State<Controls> {
           videoController = _controller;
           if (!flagAddListener && videoController != null) {
             flagAddListener = true;
-            videoController.addListener(listener);
+            videoController.addListener(listenerControls);
           }
         });
       }
@@ -132,22 +132,22 @@ class _ControlsState extends State<Controls> {
   @override
   void deactivate() {
     if (videoController != null && videoController.value.initialized) {
-      videoController.removeListener(listener);
+      videoController.removeListener(listenerControls);
     }
     super.deactivate();
   }
 
   @override
   void dispose() {
-    if (!widget.isFullScreen) {
-      videoController?.setVolume(0);
-    }
-    videoController.removeListener(listener);
-    if (videoController != null) videoController.dispose();
+    // if (!widget.isFullScreen) {
+    //   videoController?.setVolume(0);
+    // }
+    
+    if (videoController != null && videoController.value.initialized ){ videoController.removeListener(listenerControls); }
     super.dispose();
   }
 
-  listener() async {
+  listenerControls() async {
     if (videoController != null && videoController.value.initialized) {
       // print(" Starting ... ");
       if (videoController.value.position != null &&

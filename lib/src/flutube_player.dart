@@ -166,12 +166,12 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
   bool showControl = false;
   CallBackVideoController callBackVideoController;
   StatePlaying statePlaying;
-
+  StatePlayer player;
   @override
   initState() {
     super.initState();
     try {
-      if (videoController != null) {
+      if (this.videoController != null) {
         disposeController("initState");
       }
       if (chewieController != null) {
@@ -180,7 +180,7 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
     } catch (e) {}
     callBackVideoController = CallBackVideoController();
     statePlaying = StatePlaying();
-
+    player = StatePlayer();
     _needsShowThumb = !widget.autoPlay;
     if (_isPlaylist) {
       _initialize((widget._videourls
@@ -199,14 +199,14 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
 
   disposeController(String func_name) {
     try {
-      if (videoController != null &&
+      if (this.videoController != null &&
           statePlaying.idPlaying != null &&
           statePlaying.idPlaying != widget._idVideo) {
-        videoController.removeListener(_playingListener);
-        videoController.removeListener(_errorListener);
-        videoController.removeListener(_endListener);
-        videoController.removeListener(_startListener);
-        videoController.dispose();
+        this.videoController.removeListener(_playingListener);
+        this.videoController.removeListener(_errorListener);
+        this.videoController.removeListener(_endListener);
+        this.videoController.removeListener(_startListener);
+        this.videoController.dispose();
       }
     } catch (e) {}
   }
@@ -214,14 +214,14 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
   void _initialize(String _url) {
     // print("_url $_url");
     _fetchVideoURL(_url).then((url) {
-      videoController = VideoPlayerController.network(url)
+      this.videoController = VideoPlayerController.network(url)
         ..addListener(_playingListener)
         ..addListener(_errorListener)
         ..addListener(_endListener)
         ..addListener(_startListener);
 
       chewieController = ChewieController(
-        videoPlayerController: videoController,
+        videoPlayerController: this.videoController,
         aspectRatio: widget.aspectRatio,
         autoInitialize: widget.autoInitialize,
         autoPlay: widget.autoPlay,
@@ -238,37 +238,37 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
         allowMuting: widget.allowMuting,
       );
 
-      if (videoController != null && videoController.value.initialized) {
-        callBackVideoController.callback(videoController);
-        widget.callBackController(videoController);
+      if (this.videoController != null && this.videoController.value.initialized) {
+        callBackVideoController.callback(this.videoController);
+        widget.callBackController(this.videoController);
       }
     });
   }
 
   _playingListener() {
-    if (isPlaying != videoController.value.isPlaying && mounted) {
+    if (isPlaying != this.videoController.value.isPlaying && mounted) {
       setState(() {
-        isPlaying = videoController.value.isPlaying;
+        isPlaying = this.videoController.value.isPlaying;
       });
     }
   }
 
   _startListener() {
-    if (statePlaying.idPlaying != null &&
-        statePlaying.idPlaying != widget._idVideo) {
-      videoController.pause();
+    if ((player.statePlayer == FlutubeState.OFF) || (statePlaying.idPlaying != null &&
+        statePlaying.idPlaying != widget._idVideo)) {
+      this.videoController.pause();
     }
-    if (videoController.value.initialized && mounted) {
-      callBackVideoController.callback(videoController);
-      widget.callBackController(videoController);
+    if (this.videoController.value.initialized && mounted) {
+      callBackVideoController.callback(this.videoController);
+      widget.callBackController(this.videoController);
     }
   }
 
   _endListener() {
-    if (videoController != null) {
-      if (videoController.value.initialized &&
-          !videoController.value.isBuffering) {
-        if (videoController.value.position >= videoController.value.duration) {
+    if (this.videoController != null) {
+      if (this.videoController.value.initialized &&
+          !this.videoController.value.isBuffering) {
+        if (this.videoController.value.position >= this.videoController.value.duration) {
           if (isPlaying) {
             chewieController.pause();
             chewieController.seekTo(Duration());
@@ -289,15 +289,15 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
               }
             }
           }
-          widget.callBackController(videoController);
-          callBackVideoController.callback(videoController);
+          widget.callBackController(this.videoController);
+          callBackVideoController.callback(this.videoController);
         }
       }
     }
   }
 
   _errorListener() {
-    if (!videoController.value.hasError) return;
+    if (!this.videoController.value.hasError) return;
     if (statePlaying.idPlaying == widget._idVideo) {
       Timer(Duration(seconds: 3), () {
         if (mounted) {
@@ -314,8 +314,8 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
         _currentlyPlaying++;
       });
     }
-    videoController.pause();
-    videoController = null;
+    this.videoController.pause();
+    this.videoController = null;
     _initialize((widget._videourls as List<String>)[_currentlyPlaying]);
     chewieController.play();
   }
@@ -327,8 +327,8 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
         _currentlyPlaying = 0;
       });
     }
-    videoController.pause();
-    videoController = null;
+    this.videoController.pause();
+    this.videoController = null;
     _initialize((widget._videourls as List<String>)[0]);
     chewieController.play();
   }
@@ -363,7 +363,7 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
                         onPressed: () {
                           if (mounted) {
                             setState(() {
-                              videoController.play();
+                              this.videoController.play();
                               _needsShowThumb = false;
                             });
                           }
