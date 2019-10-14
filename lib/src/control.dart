@@ -142,8 +142,11 @@ class _ControlsState extends State<Controls> {
     // if (!widget.isFullScreen) {
     //   videoController?.setVolume(0);
     // }
-    
-    if (videoController != null && videoController.value.initialized ){ videoController.removeListener(listenerControls); }
+    print(" what is dispose controls!");
+    if (videoController != null && videoController.value.initialized ){ 
+      videoController.removeListener(listenerControls); 
+      videoController = null;
+      }
     super.dispose();
   }
 

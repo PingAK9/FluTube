@@ -194,6 +194,14 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    if (videoController != null && player.statePlayer == FlutubeState.OFF) {
+      this.videoController.removeListener(_playingListener);
+      this.videoController.removeListener(_errorListener);
+      this.videoController.removeListener(_endListener);
+      this.videoController.removeListener(_startListener);
+    }
+
+    print(" what is dispose flutube!");
     super.dispose();
   }
 
@@ -206,20 +214,20 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
         this.videoController.removeListener(_errorListener);
         this.videoController.removeListener(_endListener);
         this.videoController.removeListener(_startListener);
-        this.videoController.dispose();
+        // this.videoController.dispose();
       }
     } catch (e) {}
   }
 
   void _initialize(String _url) {
     // print("_url $_url");
+    
     _fetchVideoURL(_url).then((url) {
       this.videoController = VideoPlayerController.network(url)
         ..addListener(_playingListener)
         ..addListener(_errorListener)
         ..addListener(_endListener)
         ..addListener(_startListener);
-
       chewieController = ChewieController(
         videoPlayerController: this.videoController,
         aspectRatio: widget.aspectRatio,
@@ -238,7 +246,8 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
         allowMuting: widget.allowMuting,
       );
 
-      if (this.videoController != null && this.videoController.value.initialized) {
+      if (this.videoController != null &&
+          this.videoController.value.initialized) {
         callBackVideoController.callback(this.videoController);
         widget.callBackController(this.videoController);
       }
@@ -254,11 +263,12 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
   }
 
   _startListener() {
-    if ((player.statePlayer == FlutubeState.OFF) || (statePlaying.idPlaying != null &&
-        statePlaying.idPlaying != widget._idVideo)) {
+    if (((player.statePlayer == FlutubeState.OFF) ||
+        (statePlaying.idPlaying != null && statePlaying.idPlaying != widget._idVideo)) && 
+        this.videoController != null && this.videoController.value.isPlaying ) {
       this.videoController.pause();
     }
-    if (this.videoController.value.initialized && mounted) {
+    if (this.videoController != null && this.videoController.value.initialized && mounted) {
       callBackVideoController.callback(this.videoController);
       widget.callBackController(this.videoController);
     }
@@ -268,7 +278,8 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
     if (this.videoController != null) {
       if (this.videoController.value.initialized &&
           !this.videoController.value.isBuffering) {
-        if (this.videoController.value.position >= this.videoController.value.duration) {
+        if (this.videoController.value.position >=
+            this.videoController.value.duration) {
           if (isPlaying) {
             chewieController.pause();
             chewieController.seekTo(Duration());
@@ -298,7 +309,9 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
 
   _errorListener() {
     if (!this.videoController.value.hasError) return;
-    if (statePlaying.idPlaying == widget._idVideo) {
+    if (statePlaying.idPlaying == widget._idVideo &&
+        player.statePlayer == FlutubeState.ON) {
+      print("--------------------- ERROR ----------------------");
       Timer(Duration(seconds: 3), () {
         if (mounted) {
           _initialize(widget._videourls as String);
@@ -417,6 +430,7 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
   }
 
   Future<String> _fetchVideoURL(String yt) async {
+    print("-------------------------------------- FETCH VIDEO -----------------------------------");
     final response = await http.get(yt);
     Iterable parseAll = _allStringMatches(
         response.body, RegExp("\"url_encoded_fmt_stream_map\":\"([^\"]*)\""));
@@ -430,7 +444,7 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
     String finalUrl = Uri.decodeFull(parseAll.toList()[0]);
     if (finalUrl.indexOf('\\u00') > -1)
       finalUrl = finalUrl.substring(0, finalUrl.indexOf('\\u00'));
-
+print("-------------------------------------- FETCH DONE -----------------------------------");
     return finalUrl;
   }
 
