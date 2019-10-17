@@ -86,6 +86,8 @@ class FluTube extends StatefulWidget {
 
   bool isFullscreen;
 
+  String typeVideo;
+
   FluTube(@required String videourl,
       {Key key,
       this.aspectRatio,
@@ -110,9 +112,10 @@ class FluTube extends StatefulWidget {
       this.width,
       this.height,
       this.playCtrDelegate,
-      this.isFullscreen})
+      this.isFullscreen,
+      this.typeVideo = "YOUTUBE"})
       : super(key: key) {
-    this._videourls = "https://www.youtube.com/watch?v=" + videourl;
+    this._videourls = videourl; //TODO: data cu chua xu ly lai.
     this._idVideo = videourl;
   }
 
@@ -140,7 +143,8 @@ class FluTube extends StatefulWidget {
       this.width,
       this.height,
       this.playCtrDelegate,
-      this.isFullscreen})
+      this.isFullscreen,
+      this.typeVideo = "YOUTUBE"})
       : super(key: key) {
     assert(playlist.length > 0, 'Playlist should not be empty!');
     this._videourls = playlist;
@@ -184,9 +188,9 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
     _needsShowThumb = !widget.autoPlay;
     if (_isPlaylist) {
       _initialize((widget._videourls
-          as List<String>)[0]); // Play the very first video of the playlist
+          as List<String>)[0], widget.typeVideo); // Play the very first video of the playlist
     } else {
-      _initialize(widget._videourls as String);
+      _initialize(widget._videourls as String, widget.typeVideo);
       statePlaying.idPlaying = widget._idVideo;
     }
   }
@@ -201,7 +205,7 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
       this.videoController.removeListener(_startListener);
     }
 
-    print(" what is dispose flutube!");
+    // print(" what is dispose flutube!");
     super.dispose();
   }
 
@@ -219,10 +223,10 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
     } catch (e) {}
   }
 
-  void _initialize(String _url) {
+  void _initialize(String _url, String type) {
     // print("_url $_url");
     
-    _fetchVideoURL(_url).then((url) {
+    _fetchVideoURL(_url, type).then((url) {
       this.videoController = VideoPlayerController.network(url)
         ..addListener(_playingListener)
         ..addListener(_errorListener)
@@ -311,10 +315,10 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
     if (!this.videoController.value.hasError) return;
     if (statePlaying.idPlaying == widget._idVideo &&
         player.statePlayer == FlutubeState.ON) {
-      print("--------------------- ERROR ----------------------");
+      // print("--------------------- ERROR ----------------------");
       Timer(Duration(seconds: 3), () {
         if (mounted) {
-          _initialize(widget._videourls as String);
+          _initialize(widget._videourls as String, widget.typeVideo);
         }
       });
     }
@@ -329,7 +333,7 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
     }
     this.videoController.pause();
     this.videoController = null;
-    _initialize((widget._videourls as List<String>)[_currentlyPlaying]);
+    _initialize((widget._videourls as List<String>)[_currentlyPlaying], widget.typeVideo);
     chewieController.play();
   }
 
@@ -342,7 +346,7 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
     }
     this.videoController.pause();
     this.videoController = null;
-    _initialize((widget._videourls as List<String>)[0]);
+    _initialize((widget._videourls as List<String>)[0], widget.typeVideo);
     chewieController.play();
   }
 
@@ -429,22 +433,57 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
     }
   }
 
-  Future<String> _fetchVideoURL(String yt) async {
-    print("-------------------------------------- FETCH VIDEO -----------------------------------");
+  Future<String> _fetchVideoURL(String yt, String type) async {
+    if(type.toUpperCase() == "MP4") return yt;
+    if(type.toUpperCase() == "YOUTUBE") { yt = "https://www.youtube.com/watch?v=" + yt;}
+    // print("-------------------------------------- FETCH VIDEO -----------------------------------");
     final response = await http.get(yt);
+
+    // print("========================response.body========================");
+    // print(response.body);
+
     Iterable parseAll = _allStringMatches(
         response.body, RegExp("\"url_encoded_fmt_stream_map\":\"([^\"]*)\""));
+
+    // print("========================parseAll 1========================");
+    // printWrapped(parseAll.toString());
+
     final Iterable<String> parse =
         _allStringMatches(parseAll.toList()[0], RegExp("url=(.*)"));
 
+    // print("========================parse========================");
+    // printWrapped(parse.toString());
+
     final List<String> urls = parse.toList()[0].split('url=');
+
+    // print("========================urls========================");
+    // printWrapped(urls.toString());
+
+
     parseAll = _allStringMatches(urls[1], RegExp("([^&,]*)[&,]"));
+
+    // print("========================parseAll 2========================");
+    // print(parseAll);
+
     if (parseAll.isEmpty) parseAll = [urls[1]];
 
+    // print("========================parseAll 2.1========================");
+    // printWrapped(parseAll.toString());
+
     String finalUrl = Uri.decodeFull(parseAll.toList()[0]);
+
+    // print("========================finalUrl========================");
+    // printWrapped(finalUrl);
+
+
     if (finalUrl.indexOf('\\u00') > -1)
       finalUrl = finalUrl.substring(0, finalUrl.indexOf('\\u00'));
-print("-------------------------------------- FETCH DONE -----------------------------------");
+
+
+    // print("========================finalUrl 1.1========================");
+    // printWrapped(finalUrl);
+
+// print("-------------------------------------- FETCH DONE -----------------------------------");
     return finalUrl;
   }
 
@@ -455,5 +494,9 @@ print("-------------------------------------- FETCH DONE -----------------------
     String id = yt.substring(yt.indexOf('v=') + 2);
     if (id.contains('&')) id = id.substring(0, id.indexOf('&'));
     return "http://img.youtube.com/vi/$id/0.jpg";
+  }
+  void printWrapped(String text) {
+    final pattern = new RegExp('.{1,800}'); // 800 is the size of each chunk
+    pattern.allMatches(text).forEach((match) => print(match.group(0)));
   }
 }
