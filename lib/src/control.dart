@@ -530,7 +530,8 @@ class _ControlsState extends State<Controls> {
                               seconds: (position * totalLength).floor(),
                             ),
                           );
-                          videoController.play();
+                          if(!videoController.value.isPlaying)
+                            videoController.play();
                           if (mounted) {
                             setState(() {
                               currentPosition = position;
