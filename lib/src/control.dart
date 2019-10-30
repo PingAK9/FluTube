@@ -321,7 +321,9 @@ class _ControlsState extends State<Controls> {
     return Stack(
       children: <Widget>[
         GestureDetector(
-          onTap: onTapAction,
+           onTap: () {
+            onTapAction(isShowControl: false);
+            },
           onDoubleTap: actionFastForward,
           child: Container(
             color: Colors.transparent,
@@ -329,28 +331,29 @@ class _ControlsState extends State<Controls> {
             // height: _height - 80,
           ),
         ),
-        Center(
-          child: GestureDetector(
-            onTap: () {
-              if (widget.playCtrDelegate != null) {
-                widget.playCtrDelegate.nextVideo();
-              }
-            },
-            child: _showControls
-                ? Center(
-                    child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: <Widget>[
-                      Icon(
-                        Icons.fast_forward,
-                        size: 40.0,
-                        color: Colors.transparent,
-                      ),
-                    ],
-                  ))
-                : Container(),
-          ),
-        )
+        // TODO :handle next Video 
+        // Center(
+        //   child: GestureDetector(
+        //     onTap: () {
+        //       if (widget.playCtrDelegate != null) {
+        //         widget.playCtrDelegate.nextVideo();
+        //       }
+        //     },
+        //     child: _showControls
+        //         ? Center(
+        //             child: Row(
+        //             mainAxisSize: MainAxisSize.min,
+        //             children: <Widget>[
+        //               Icon(
+        //                 Icons.fast_forward,
+        //                 size: 40.0,
+        //                 color: Colors.transparent,
+        //               ),
+        //             ],
+        //           ))
+        //         : Container(),
+        //   ),
+        // )
       ],
     );
   }
@@ -359,43 +362,46 @@ class _ControlsState extends State<Controls> {
     return Stack(
       children: <Widget>[
         GestureDetector(
-          onTap: onTapAction,
+          onTap: () {
+            onTapAction(isShowControl: false);
+            },
           onDoubleTap: actionFastRewind,
           child: Container(
             color: Colors.transparent,
           ),
         ),
-        Center(
-          child: GestureDetector(
-            onTap: () {
-              print("Tap _rewind");
-            },
-            child: _showControls
-                ? Center(
-                    child: GestureDetector(
-                    child: Icon(
-                      Icons.fast_rewind,
-                      size: 40.0,
-                      color: Colors.transparent,
-                    ),
-                    onTap: () {
-                      if (widget.playCtrDelegate != null) {
-                        widget.playCtrDelegate.previousVideo();
-                      }
-                    },
-                  ))
-                : Container(),
-          ),
-        )
+        // TODO :handle next Video 
+        // Center(
+        //   child: GestureDetector(
+        //     onTap: () {
+        //       print("Tap _rewind");
+        //     },
+        //     child: _showControls
+        //         ? Center(
+        //             child: GestureDetector(
+        //             child: Icon(
+        //               Icons.fast_rewind,
+        //               size: 40.0,
+        //               color: Colors.transparent,
+        //             ),
+        //             onTap: () {
+        //               if (widget.playCtrDelegate != null) {
+        //                 widget.playCtrDelegate.previousVideo();
+        //               }
+        //             },
+        //           ))
+        //         : Container(),
+        //   ),
+        // )
       ],
     );
   }
 
-  void onTapAction() {
+  void onTapAction({bool isShowControl = true}) {
     if (_timer != null) _timer.cancel();
     if (mounted) {
       setState(() {
-        _showControls = true;
+        _showControls = isShowControl;
         widget.controlsShowingCallback(_showControls);
       });
     }
