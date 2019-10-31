@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutube/flutube.dart';
 import 'package:flutube/src/callback_control.dart';
@@ -47,6 +48,7 @@ class Controls extends StatefulWidget {
   final bool switchFullScreenOnLongPress;
   final bool hideShareButton;
   PlayControlDelegate playCtrDelegate;
+  final String urlImageThumnail;
   // VideoPlayerController videoController;
 
   Controls({
@@ -64,6 +66,7 @@ class Controls extends StatefulWidget {
     this.switchFullScreenOnLongPress,
     this.hideShareButton,
     this.playCtrDelegate,
+    this.urlImageThumnail
   });
 
   @override
@@ -83,6 +86,7 @@ class _ControlsState extends State<Controls> {
   VideoPlayerController videoController;
   bool isShowSub = true;
   EventControl eventControl;
+  bool isShowThumnail;
   @override
   void initState() {
     eventControl = EventControl();
@@ -91,7 +95,7 @@ class _ControlsState extends State<Controls> {
     widget.controlsShowingCallback(_showControls);
     // widget.playCtrDelegate = PlayControlDelegate();
     callbackController = CallBackVideoController();
-
+    isShowThumnail = true;
     callbackController.callback = (_controller) {
       if (_controller != null && _controller.value.initialized && mounted) {
         setState(() {
@@ -155,6 +159,7 @@ class _ControlsState extends State<Controls> {
       // print(" Starting ... ");
       if (videoController.value.position != null &&
           videoController.value.duration != null) {
+        isShowThumnail = false;
         if (mounted && videoController.value.isPlaying) {
           updateTimePostion();
         }
@@ -193,6 +198,12 @@ class _ControlsState extends State<Controls> {
   Widget build(BuildContext context) {
     return Stack(
       children: <Widget>[
+        isShowThumnail ? CachedNetworkImage(
+          imageUrl: widget.urlImageThumnail ?? "http://i3.ytimg.com/vi/D86RtevtfrA/hqdefault.jpg",
+          width: widget.width,
+          height: widget.height,
+          fit: BoxFit.cover,
+        ) : SizedBox(),
         _showControls
             ? Container(
                 // color: Color(0x88000000),
@@ -255,7 +266,7 @@ class _ControlsState extends State<Controls> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: <Widget>[
                                 Expanded(
-                                  child: GestureDetector(
+                                  child: InkWell(
                                     onTap: () {
                                       tapLayout();
                                     },
@@ -267,7 +278,7 @@ class _ControlsState extends State<Controls> {
                                   flex: 1,
                                 ),
                                 Expanded(
-                                  child: GestureDetector(
+                                  child: InkWell(
                                     onTap: () {
                                       tapLayout();
                                     },
@@ -287,6 +298,7 @@ class _ControlsState extends State<Controls> {
             ),
           ),
         ),
+        
       ],
     );
   }
@@ -353,7 +365,7 @@ class _ControlsState extends State<Controls> {
         //           ))
         //         : Container(),
         //   ),
-        // )
+        // ),
       ],
     );
   }
@@ -430,6 +442,7 @@ class _ControlsState extends State<Controls> {
                   // borderRadius: BorderRadius.circular(30.0),
                   onTap: () {
                     print("Tap Player");
+                    
                     onTapAction();
 
                     if (videoController?.value?.initialized ?? false) {

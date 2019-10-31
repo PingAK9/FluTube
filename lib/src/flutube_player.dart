@@ -88,6 +88,8 @@ class FluTube extends StatefulWidget {
 
   String typeVideo;
 
+  String urlImageThumnail;
+
   FluTube(@required String videourl,
       {Key key,
       this.aspectRatio,
@@ -113,7 +115,9 @@ class FluTube extends StatefulWidget {
       this.height,
       this.playCtrDelegate,
       this.isFullscreen,
-      this.typeVideo = "YOUTUBE"})
+      this.typeVideo = "YOUTUBE",
+      this.urlImageThumnail,
+    })
       : super(key: key) {
     this._videourls = videourl; //TODO: data cu chua xu ly lai.
     this._idVideo = videourl;
@@ -396,6 +400,7 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
       );
     } else {
       Controls _controls = Controls(
+        urlImageThumnail: widget.urlImageThumnail,
         playCtrDelegate: widget.playCtrDelegate,
         width: widget.width,
         height: widget.height,
