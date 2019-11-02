@@ -122,16 +122,6 @@ class _ControlsState extends State<Controls> {
       }
     }
   }
-  // @override
-  // void didUpdateWidget(Controls oldWidget) {
-  //   super.didUpdateWidget(oldWidget);
-  //   if (videoController != null &&
-  //       oldWidget != null &&
-  //       videoController.value.initialized) {
-  //     oldWidget.videoController.removeListener(listener);
-  //     videoController.addListener(listener);
-  //   }
-  // }
 
   @override
   void deactivate() {
@@ -143,10 +133,6 @@ class _ControlsState extends State<Controls> {
 
   @override
   void dispose() {
-    // if (!widget.isFullScreen) {
-    //   videoController?.setVolume(0);
-    // }
-    print(" what is dispose controls!");
     if (videoController != null && videoController.value.initialized ){ 
       videoController.removeListener(listenerControls); 
       videoController = null;
@@ -343,29 +329,29 @@ class _ControlsState extends State<Controls> {
             // height: _height - 80,
           ),
         ),
-        // TODO :handle next Video 
-        // Center(
-        //   child: GestureDetector(
-        //     onTap: () {
-        //       if (widget.playCtrDelegate != null) {
-        //         widget.playCtrDelegate.nextVideo();
-        //       }
-        //     },
-        //     child: _showControls
-        //         ? Center(
-        //             child: Row(
-        //             mainAxisSize: MainAxisSize.min,
-        //             children: <Widget>[
-        //               Icon(
-        //                 Icons.fast_forward,
-        //                 size: 40.0,
-        //                 color: Colors.transparent,
-        //               ),
-        //             ],
-        //           ))
-        //         : Container(),
-        //   ),
-        // ),
+        (videoController != null && videoController.value.initialized) ? 
+          Center(
+          child: GestureDetector(
+            onTap: () {
+              if (widget.playCtrDelegate != null) {
+                widget.playCtrDelegate.nextVideo();
+              }
+            },
+            child: _showControls
+                ? Center(
+                    child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Icon(
+                        Icons.fast_forward,
+                        size: 40.0,
+                        color: Colors.white,
+                      ),
+                    ],
+                  ))
+                : Container(),
+          ),
+        ) : SizedBox(),
       ],
     );
   }
@@ -382,29 +368,31 @@ class _ControlsState extends State<Controls> {
             color: Colors.transparent,
           ),
         ),
-        // TODO :handle next Video 
-        // Center(
-        //   child: GestureDetector(
-        //     onTap: () {
-        //       print("Tap _rewind");
-        //     },
-        //     child: _showControls
-        //         ? Center(
-        //             child: GestureDetector(
-        //             child: Icon(
-        //               Icons.fast_rewind,
-        //               size: 40.0,
-        //               color: Colors.transparent,
-        //             ),
-        //             onTap: () {
-        //               if (widget.playCtrDelegate != null) {
-        //                 widget.playCtrDelegate.previousVideo();
-        //               }
-        //             },
-        //           ))
-        //         : Container(),
-        //   ),
-        // )
+         (videoController != null && videoController.value.initialized) ? 
+          Center(
+          child: GestureDetector(
+            onTap: () {
+               if (widget.playCtrDelegate != null) {
+                widget.playCtrDelegate.previousVideo();
+              }
+            },
+            child: _showControls
+                ? Center(
+                    child: GestureDetector(
+                    child: Icon(
+                      Icons.fast_rewind,
+                      size: 40.0,
+                      color: Colors.white,
+                    ),
+                    onTap: () {
+                      if (widget.playCtrDelegate != null) {
+                        widget.playCtrDelegate.previousVideo();
+                      }
+                    },
+                  ))
+                : Container(),
+          ),
+        ) : SizedBox()
       ],
     );
   }

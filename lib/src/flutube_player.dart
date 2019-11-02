@@ -256,6 +256,7 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
 
       if (this.videoController != null &&
           this.videoController.value.initialized) {
+        print("---------------------call back from init to CONTROL------------------");
         callBackVideoController.callback(this.videoController);
         widget.callBackController(this.videoController);
       }
@@ -271,6 +272,14 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
   }
 
   _startListener() {
+    // TODO: check listen - handle next and pre of player -- 02/11/2019
+    // print("---------------------call back from _startListener to CONTROL xxx------------------");
+    // print(player.statePlayer == FlutubeState.OFF);
+    // print(statePlaying.idPlaying != null);
+    // print(statePlaying.idPlaying != widget._idVideo);
+    // print(this.videoController != null);
+    // print(this.videoController.value.isPlaying);
+
     if (((player.statePlayer == FlutubeState.OFF) ||
         (statePlaying.idPlaying != null && statePlaying.idPlaying != widget._idVideo)) && 
         this.videoController != null && this.videoController.value.isPlaying ) {
@@ -317,14 +326,13 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
 
   _errorListener() {
     if (!this.videoController.value.hasError) return;
-    if (statePlaying.idPlaying == widget._idVideo &&
-        player.statePlayer == FlutubeState.ON) {
-      // print("--------------------- ERROR ----------------------");
-      Timer(Duration(seconds: 3), () {
-        if (mounted) {
-          _initialize(widget._videourls as String, widget.typeVideo);
-        }
-      });
+    // TODO: check _errorListener - handle next and pre of player -- 02/11/2019
+    // print("--------------------- ERROR  2 ----------------------");
+    // print(statePlaying.idPlaying);
+    // print(widget._idVideo);
+    // print(player.statePlayer == FlutubeState.ON);
+    if (statePlaying.idPlaying == widget._idVideo && player.statePlayer == FlutubeState.ON) {
+      _initialize(widget._videourls as String, widget.typeVideo);
     }
   }
 

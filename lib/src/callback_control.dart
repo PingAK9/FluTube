@@ -34,10 +34,12 @@ class StatePlaying {
   StatePlaying._internal();
 }
 enum FlutubeState { ON, OFF } 
+enum FlutubeStateScreen { NEW, OLD} 
 class StatePlayer {
   static StatePlayer instance;
 
   FlutubeState statePlayer;
+  FlutubeStateScreen stateScreen;
 
   factory StatePlayer() {
     if (instance == null) instance = StatePlayer._internal();
