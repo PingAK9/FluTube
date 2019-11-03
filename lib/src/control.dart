@@ -7,6 +7,7 @@ import 'package:video_player/video_player.dart';
 
 enum StateControl { INIT, ACTIVE, DONE }
 enum StateActionPlayer { FAST_FORWARD, FAST_REWIND }
+enum StateDoubleTap { LEFT, RIGHT, NONE }
 typedef YoutubeQualityChangeCallback(String quality, Duration position);
 typedef ControlsShowingCallback(bool showing);
 const String ICON_PLAY_DETAIL = "assets/images/icons/ic_play_detail.png";
@@ -78,7 +79,9 @@ class _ControlsState extends State<Controls> {
   //-----------------------Variable--------------------------
   //---------------------------------------------------------
   bool                          _showControls;
+  StateDoubleTap                _stateDoubleTap;
   Timer                         _timer;
+  Timer                         _timerDoubleTap;
   CallBackVideoController       _callbackController;
   VideoPlayerController         _videoController;
   EventControl                  _eventControl;
@@ -88,6 +91,7 @@ class _ControlsState extends State<Controls> {
   String                        _remainingString = "00:00";
   bool                          _flagAddListener = false;
   bool                          _isShowSub = true;
+  bool                          _isShowIconFast;
  
 
 
@@ -103,6 +107,8 @@ class _ControlsState extends State<Controls> {
     _eventControl                       = EventControl();
     _eventControl.play                  = playVideo;
     _showControls                       = widget.showControls ?? true;
+    _stateDoubleTap                     = StateDoubleTap.NONE;
+    _isShowIconFast                     = false;
     
     _callbackController = CallBackVideoController();
     _callbackController.callback = (_controller) {
@@ -194,6 +200,7 @@ class _ControlsState extends State<Controls> {
   Widget build(BuildContext context) {
     return Stack(
       children: <Widget>[
+        _renderAreaOfActionDoubleTap(),
         (_stateControl != StateControl.ACTIVE)
           ? CachedNetworkImage(
               imageUrl: widget.urlImageThumnail ??
@@ -262,7 +269,11 @@ class _ControlsState extends State<Controls> {
                                 tapLayout();
                               },
                               onDoubleTap: (){
-                                actionFastForwardAndRewind(stateActionPlayer: StateActionPlayer.FAST_REWIND);
+                                actionFastForwardAndRewind(
+                                  stateActionPlayer: StateActionPlayer.FAST_REWIND,
+                                  isStateDoubleTap: StateDoubleTap.LEFT,
+                                  isShowIconFast: true,
+                                );
                               },
                               child: Container(
                                 color: Colors.transparent,
@@ -276,7 +287,11 @@ class _ControlsState extends State<Controls> {
                                 tapLayout();
                               },
                               onDoubleTap: (){
-                                actionFastForwardAndRewind(stateActionPlayer: StateActionPlayer.FAST_FORWARD);
+                                actionFastForwardAndRewind(
+                                  stateActionPlayer: StateActionPlayer.FAST_FORWARD,
+                                  isStateDoubleTap: StateDoubleTap.RIGHT,
+                                  isShowIconFast: true
+                                );
                               },
                               child: Container(
                                 color: Colors.transparent,
@@ -374,7 +389,10 @@ class _ControlsState extends State<Controls> {
             onTapAction(isShowControl: false);
           },
           onDoubleTap: (){
-            actionFastForwardAndRewind(stateActionPlayer: StateActionPlayer.FAST_FORWARD);
+            actionFastForwardAndRewind(
+              stateActionPlayer: StateActionPlayer.FAST_FORWARD,
+              isStateDoubleTap: StateDoubleTap.RIGHT
+            );
           },
           child: Container(
             color: Colors.transparent,
@@ -416,7 +434,10 @@ class _ControlsState extends State<Controls> {
             onTapAction(isShowControl: false);
           },
           onDoubleTap: (){
-            actionFastForwardAndRewind(stateActionPlayer: StateActionPlayer.FAST_REWIND);
+            actionFastForwardAndRewind(
+              stateActionPlayer: StateActionPlayer.FAST_REWIND,
+              isStateDoubleTap: StateDoubleTap.LEFT
+            );
           },
           child: Container(
             color: Colors.transparent,
@@ -607,6 +628,72 @@ class _ControlsState extends State<Controls> {
     );
   }
 
+//-----------------------Render area fastforward and fastrewind-------------------------
+Widget _renderAreaOfActionDoubleTap(){
+  return Container(
+    width: widget.width,
+    height: widget.height,
+    child: Center(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          Expanded(
+            child: AnimatedOpacity(
+              opacity: (_stateDoubleTap == StateDoubleTap.LEFT) ? 1.0 : 0.0,
+                duration: Duration(milliseconds: 300),
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.only(
+                      topRight: Radius.elliptical(40, 120),
+                      bottomRight: Radius.elliptical(40, 100),
+                    ),
+                    color: Colors.white30,
+                  ),
+                  child: _isShowIconFast ? Center(
+                    child: Icon(
+                      Icons.fast_rewind, 
+                      color: Colors.white60,
+                      size: 40.0
+                    ),
+                  ) : Container(color: Colors.transparent,),
+                ),
+              ),
+            flex: 4,
+          ),
+          Expanded(
+            child: Container(color: Colors.transparent,),
+            flex: 2,
+          ),
+          Expanded(
+            child: AnimatedOpacity(
+              opacity: (_stateDoubleTap == StateDoubleTap.RIGHT) ? 1.0 : 0.0,
+              duration: Duration(milliseconds: 300),
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.elliptical(40, 120),
+                    bottomLeft: Radius.elliptical(40, 100),
+                  ),
+                  color: Colors.white30,
+                ),
+                child: _isShowIconFast ? Center(
+                  child: Icon(
+                    Icons.fast_forward, 
+                    color: Colors.white60,
+                    size: 40.0
+                  ),
+                ) : Container(color: Colors.transparent,),
+              ),
+            ),
+            flex: 4,
+          )
+        ],
+      ),
+    ),
+  );
+}
+
  //---------------------------------------------------------
   //-----------------------Function Handle------------------
   //---------------------------------------------------------
@@ -614,22 +701,14 @@ class _ControlsState extends State<Controls> {
   onTapAction({bool isShowControl = true}) {
     if (_stateControl == StateControl.ACTIVE) {
       if (_timer != null) _timer.cancel();
-
-      if (mounted) {
-        setState(() {
-          _showControls = isShowControl;
-          widget.controlsShowingCallback(_showControls);
-        });
-      }
-
+      _showControls = isShowControl;
+      refeshWidget();
+      widget.controlsShowingCallback(_showControls);
       if (_showControls) {
         _timer = Timer(widget.controlsTimeOut, () {
-          if (mounted) {
-            setState(() {
-              _showControls = false;
-              widget.controlsShowingCallback(_showControls);
-            });
-          }
+          _showControls = false;
+          widget.controlsShowingCallback(_showControls);
+          refeshWidget();
         });
       }
     }
@@ -642,16 +721,21 @@ class _ControlsState extends State<Controls> {
     }
   }
 
-  actionFastForwardAndRewind({StateActionPlayer stateActionPlayer}) {
+  actionFastForwardAndRewind({StateActionPlayer stateActionPlayer, StateDoubleTap isStateDoubleTap,isShowIconFast = false}) {
+    _isShowIconFast = isShowIconFast;    
+    onDoubleTap(isStateDoubleTap);
+    
     if (mounted) {
       if (_videoController != null && _stateControl != StateControl.INIT) {
         int handle = (stateActionPlayer == StateActionPlayer.FAST_FORWARD) ? 5 : (-5);
         int _seconds = _videoController.value.position.inSeconds + handle;
+
         if ((_videoController.value.duration.inMilliseconds - 700) <= (_seconds * 1000)) {
           _handleDone();
         }else{
-           _videoController.seekTo(Duration(seconds: _seconds));
-           _stateControl = StateControl.ACTIVE;
+          _videoController.seekTo(Duration(seconds: _seconds));
+          _stateControl = StateControl.ACTIVE;
+
           Timer(Duration(seconds: 1), () {
             updateTimePostion();
           });
@@ -672,6 +756,27 @@ class _ControlsState extends State<Controls> {
     });
   }
 
+  onDoubleTap(StateDoubleTap isStateDoubleTap){
+    if (_stateControl == StateControl.ACTIVE) {
+      if (_timerDoubleTap != null) _timerDoubleTap.cancel();
+      _stateDoubleTap = isStateDoubleTap;
+      refeshWidget();
+
+      if (_stateDoubleTap != StateDoubleTap.NONE) {
+        _timerDoubleTap = Timer(Duration(milliseconds: 1500), () {
+          _stateDoubleTap = StateDoubleTap.NONE;
+          _isShowIconFast = false;
+          refeshWidget();
+        });
+      }
+    }
+  }
+
+  refeshWidget(){
+    if (mounted) {
+        setState(() { });
+    }
+  }
   String formatDuration(Duration position) {
     final ms              = position.inMilliseconds;
     int seconds           = ms ~/ 1000;
