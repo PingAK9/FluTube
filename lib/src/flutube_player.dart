@@ -195,7 +195,6 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
       _initialize((widget._videourls as List<String>)[0], widget.typeVideo); // Play the very first video of the playlist
     } else {
       _initialize(widget._videourls as String, widget.typeVideo);
-      statePlaying.idPlaying = widget._idVideo;
     }
     widget.playCtrDelegate.replay = (){
       _playVideoLoop();
@@ -219,9 +218,7 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
 
   disposeController(String func_name) {
     try {
-      if (this.videoController != null &&
-          statePlaying.idPlaying != null &&
-          statePlaying.idPlaying != widget._idVideo) {
+      if (this.videoController != null && statePlaying.hashCodeWidget != null && statePlaying.hashCodeWidget != widget.playCtrDelegate.hashCode) {
         this.videoController.removeListener(_playingListener);
         this.videoController.removeListener(_errorListener);
         this.videoController.removeListener(_endListener);
@@ -233,7 +230,7 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
 
   void _initialize(String _url, String type) {
     print("[Flutube_player.dart] _initialize--------------------URL VIDEO: $_url");
-    
+    statePlaying.hashCodeWidget = widget.playCtrDelegate.hashCode;
     _fetchVideoURL(_url, type).then((url) {
       this.videoController = VideoPlayerController.network(url)
         ..addListener(_playingListener)
@@ -285,7 +282,7 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
     // print(this.videoController.value.isPlaying);
 
     if (((player.statePlayer == FlutubeState.OFF) ||
-        (statePlaying.idPlaying != null && statePlaying.idPlaying != widget._idVideo)) && 
+        (statePlaying.hashCodeWidget != null && statePlaying.hashCodeWidget != widget.playCtrDelegate.hashCode)) && 
         this.videoController != null && this.videoController.value.isPlaying ) {
       this.videoController.pause();
     }
@@ -337,7 +334,7 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
     // print(statePlaying.idPlaying);
     // print(widget._idVideo);
     // print(player.statePlayer == FlutubeState.ON);
-    if (statePlaying.idPlaying == widget._idVideo && player.statePlayer == FlutubeState.ON) {
+    if (statePlaying.hashCodeWidget == widget.playCtrDelegate.hashCode && player.statePlayer == FlutubeState.ON) {
       _initialize(widget._videourls as String, widget.typeVideo);
     }
   }
@@ -374,7 +371,6 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
       this.videoController.pause();
       this.videoController = null;
       _initialize(widget._videourls as String, widget.typeVideo);
-      statePlaying.idPlaying = widget._idVideo;
       });
     
   }

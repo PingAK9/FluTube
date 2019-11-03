@@ -26,7 +26,7 @@ class StatePlaying {
   static StatePlaying instance;
 
   String idPlaying;
-
+  int hashCodeWidget;
   factory StatePlaying() {
     if (instance == null) instance = StatePlaying._internal();
     return instance;

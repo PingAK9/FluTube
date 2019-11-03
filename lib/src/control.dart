@@ -127,7 +127,9 @@ class _ControlsState extends State<Controls> {
     if (_videoController != null && _videoController.value.initialized) {
       _videoController.removeListener(listenerControls);
     }
-    StatePlayer.instance.statePlayer = FlutubeState.OFF;
+    if(StatePlayer.instance.stateScreen == FlutubeStateScreen.NEW) {
+      StatePlayer.instance.statePlayer = FlutubeState.OFF;
+    }
     super.deactivate();
   }
 
@@ -391,7 +393,7 @@ class _ControlsState extends State<Controls> {
                       mainAxisSize: MainAxisSize.min,
                       children: <Widget>[
                         Icon(
-                          Icons.fast_forward,
+                          Icons.skip_next,
                           size: 40.0,
                           color: Colors.white,
                         ),
@@ -430,7 +432,7 @@ class _ControlsState extends State<Controls> {
                     }
                   },
                   child: Icon(
-                    Icons.fast_rewind,
+                    Icons.skip_previous,
                     size: 40.0,
                     color: Colors.white,
                   ),
@@ -661,6 +663,7 @@ class _ControlsState extends State<Controls> {
   _handleDone(){
     _videoController.pause();
     setState(() {
+      StatePlayer.instance.stateScreen = FlutubeStateScreen.NEW;
       _stateControl = StateControl.DONE;
       _remainingString = "00:00";
       _currentPositionString = formatDuration(_videoController.value.duration);
