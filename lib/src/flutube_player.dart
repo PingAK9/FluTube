@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:chewie/chewie.dart';
 import 'package:flutter/services.dart';
@@ -191,16 +192,19 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
     player = StatePlayer();
     _needsShowThumb = !widget.autoPlay;
     if (_isPlaylist) {
-      _initialize((widget._videourls
-          as List<String>)[0], widget.typeVideo); // Play the very first video of the playlist
+      _initialize((widget._videourls as List<String>)[0], widget.typeVideo); // Play the very first video of the playlist
     } else {
       _initialize(widget._videourls as String, widget.typeVideo);
       statePlaying.idPlaying = widget._idVideo;
     }
+    widget.playCtrDelegate.replay = (){
+      _playVideoLoop();
+    };
   }
 
   @override
   void dispose() {
+    print("[flutube_player.dart]-------------dispose-------------");
     WidgetsBinding.instance.removeObserver(this);
     if (videoController != null && player.statePlayer == FlutubeState.OFF) {
       this.videoController.removeListener(_playingListener);
@@ -228,7 +232,7 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
   }
 
   void _initialize(String _url, String type) {
-    // print("_url $_url");
+    print("[Flutube_player.dart] _initialize--------------------URL VIDEO: $_url");
     
     _fetchVideoURL(_url, type).then((url) {
       this.videoController = VideoPlayerController.network(url)
@@ -242,7 +246,7 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
         autoInitialize: widget.autoInitialize,
         autoPlay: widget.autoPlay,
         startAt: widget.startAt,
-        looping: _isPlaylist ? false : widget.looping,
+        looping: false,
         placeholder: widget.placeholder,
         showControls: false,
         fullScreenByDefault: widget.fullscreenByDefault,
@@ -293,10 +297,8 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
 
   _endListener() {
     if (this.videoController != null) {
-      if (this.videoController.value.initialized &&
-          !this.videoController.value.isBuffering) {
-        if (this.videoController.value.position >=
-            this.videoController.value.duration) {
+      if (this.videoController.value.initialized && !this.videoController.value.isBuffering) {
+        if (this.videoController.value.position >= this.videoController.value.duration) {
           if (isPlaying) {
             chewieController.pause();
             chewieController.seekTo(Duration());
@@ -308,15 +310,19 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
             });
           }
           if (_isPlaylist) {
-            if (_currentlyPlaying <
-                (widget._videourls as List<String>).length - 1) {
+            if (_currentlyPlaying < (widget._videourls as List<String>).length - 1) {
               _playlistLoadNext();
             } else {
               if (widget.looping) {
                 _playlistLoop();
               }
             }
+          }else{
+            if(widget.looping) {
+              _playVideoLoop();
+            }
           }
+          
           widget.callBackController(this.videoController);
           callBackVideoController.callback(this.videoController);
         }
@@ -361,6 +367,18 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
     _initialize((widget._videourls as List<String>)[0], widget.typeVideo);
     chewieController.play();
   }
+  _playVideoLoop() {
+    print("-------------------Handle current-----------------");
+     setState(() {
+      chewieController?.dispose();
+      this.videoController.pause();
+      this.videoController = null;
+      _initialize(widget._videourls as String, widget.typeVideo);
+      statePlaying.idPlaying = widget._idVideo;
+      });
+    
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -373,34 +391,12 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
             child: Stack(
               fit: StackFit.expand,
               children: <Widget>[
-                Image.network(
-                  _videoThumbURL(_isPlaylist
-                      ? widget._videourls[_currentlyPlaying]
-                      : widget._videourls),
+                CachedNetworkImage(
+                  imageUrl: widget.urlImageThumnail ?? "http://i3.ytimg.com/vi/D86RtevtfrA/hqdefault.jpg",
+                  width: widget.width,
+                  height: widget.height,
                   fit: BoxFit.cover,
-                ),
-                Center(
-                  child: ClipOval(
-                    child: Container(
-                      color: Colors.white,
-                      child: IconButton(
-                        iconSize: 50.0,
-                        color: Colors.black,
-                        icon: Icon(
-                          Icons.play_arrow,
-                        ),
-                        onPressed: () {
-                          if (mounted) {
-                            setState(() {
-                              this.videoController.play();
-                              _needsShowThumb = false;
-                            });
-                          }
-                        },
-                      ),
-                    ),
-                  ),
-                ),
+                )
               ],
             ),
           ),

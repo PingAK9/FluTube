@@ -5,5 +5,6 @@ abstract class PlayControlDelegate {
   Future<bool> fullscreen (bool isFullscreen);
   bool subvideo (bool isShowSub);
   void backButton ();
+  Function() replay;
   // void 
 }

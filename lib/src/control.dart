@@ -5,8 +5,8 @@ import 'package:flutube/flutube.dart';
 import 'package:flutube/src/callback_control.dart';
 import 'package:video_player/video_player.dart';
 
-// import '../video_player_controller.dart';
-
+enum StateControl { INIT, ACTIVE, DONE }
+enum StateActionPlayer { FAST_FORWARD, FAST_REWIND }
 typedef YoutubeQualityChangeCallback(String quality, Duration position);
 typedef ControlsShowingCallback(bool showing);
 const String ICON_PLAY_DETAIL = "assets/images/icons/ic_play_detail.png";
@@ -41,32 +41,32 @@ class Controls extends StatefulWidget {
   final String defaultQuality;
   final bool defaultCall;
   final VoidCallback fullScreenCallback;
-  bool isFullScreen;
   final ControlsShowingCallback controlsShowingCallback;
   final bool controlsActiveBackgroundOverlay;
   final Duration controlsTimeOut;
   final bool switchFullScreenOnLongPress;
   final bool hideShareButton;
-  PlayControlDelegate playCtrDelegate;
   final String urlImageThumnail;
-  // VideoPlayerController videoController;
+
+  PlayControlDelegate playCtrDelegate;
+  bool isFullScreen;
 
   Controls({
-    // this.videoController,
-    this.showControls,
-    this.height,
-    this.width,
-    this.defaultCall,
-    this.defaultQuality = "720p",
-    this.fullScreenCallback,
-    this.controlsShowingCallback,
-    this.isFullScreen,
-    this.controlsActiveBackgroundOverlay,
-    this.controlsTimeOut,
-    this.switchFullScreenOnLongPress,
-    this.hideShareButton,
+    this.showControls, 
+    this.width, 
+    this.height, 
+    this.defaultQuality = "720p", 
+    this.defaultCall, 
+    this.fullScreenCallback, 
+    this.controlsShowingCallback, 
+    this.controlsActiveBackgroundOverlay, 
+    this.controlsTimeOut, 
+    this.switchFullScreenOnLongPress, 
+    this.hideShareButton, 
+    this.urlImageThumnail,
     this.playCtrDelegate,
-    this.urlImageThumnail
+    this.isFullScreen,
+
   });
 
   @override
@@ -74,545 +74,252 @@ class Controls extends StatefulWidget {
 }
 
 class _ControlsState extends State<Controls> {
-  bool _showControls;
-  double currentPosition = 0;
-  String _currentPositionString = "00:00";
-  String _remainingString = "00:00";
-  bool _buffering = false;
-  Timer _timer;
-  int seekCount = 0;
-  bool flagAddListener = false;
-  CallBackVideoController callbackController;
-  VideoPlayerController videoController;
-  bool isShowSub = true;
-  EventControl eventControl;
-  bool isShowThumnail;
+  //---------------------------------------------------------
+  //-----------------------Variable--------------------------
+  //---------------------------------------------------------
+  bool                          _showControls;
+  Timer                         _timer;
+  CallBackVideoController       _callbackController;
+  VideoPlayerController         _videoController;
+  EventControl                  _eventControl;
+  StateControl                  _stateControl;
+  double                        _currentPosition = 0;
+  String                        _currentPositionString = "00:00";
+  String                        _remainingString = "00:00";
+  bool                          _flagAddListener = false;
+  bool                          _isShowSub = true;
+ 
+
+
+  //---------------------------------------------------------
+  //-----------------------Function of root------------------
+  //---------------------------------------------------------
+
   @override
   void initState() {
-    eventControl = EventControl();
-    eventControl.play = playVideo;
-    _showControls = widget.showControls ?? true;
-    widget.controlsShowingCallback(_showControls);
-    // widget.playCtrDelegate = PlayControlDelegate();
-    callbackController = CallBackVideoController();
-    isShowThumnail = true;
-    callbackController.callback = (_controller) {
+    super.initState();
+    print("[control.dart][initState] init");
+    _stateControl                       = StateControl.INIT;
+    _eventControl                       = EventControl();
+    _eventControl.play                  = playVideo;
+    _showControls                       = widget.showControls ?? true;
+    
+    _callbackController = CallBackVideoController();
+    _callbackController.callback = (_controller) {
       if (_controller != null && _controller.value.initialized && mounted) {
         setState(() {
-          videoController = _controller;
-          if (!flagAddListener && videoController != null) {
-            flagAddListener = true;
-            videoController.addListener(listenerControls);
+          _videoController = _controller;
+          if (!_flagAddListener) {
+            _stateControl = StateControl.ACTIVE;
+            _flagAddListener = true;
+            _videoController.addListener(listenerControls);
+            onTapAction();
           }
         });
       }
     };
-    onTapAction();
-    super.initState();
-
-    print("[_ControlsState] initState");
-  }
-
-  playVideo() {
-    if (videoController != null && videoController.value.initialized) {
-      if (videoController.value.isPlaying) {
-        videoController.pause();
-      } else {
-        videoController.play();
-      }
-    }
+    widget.controlsShowingCallback(_showControls);
   }
 
   @override
   void deactivate() {
-    if (videoController != null && videoController.value.initialized) {
-      videoController.removeListener(listenerControls);
+    print("[control.dart]----------------deactive----------------");
+    if (_videoController != null && _videoController.value.initialized) {
+      _videoController.removeListener(listenerControls);
     }
+    StatePlayer.instance.statePlayer = FlutubeState.OFF;
     super.deactivate();
   }
 
   @override
   void dispose() {
-    if (videoController != null && videoController.value.initialized ){ 
-      videoController.removeListener(listenerControls); 
-      videoController = null;
-      }
+    print("[control.dart]----------------dispose----------------");
+    if (_videoController != null && _videoController.value.initialized) {
+      _videoController.removeListener(listenerControls);
+      _videoController = null;
+    }
+    _stateControl = StateControl.DONE;
     super.dispose();
   }
 
+  //---------------------------------------------------------
+  //-----------------------Function Callback-----------------
+  //---------------------------------------------------------
+  playVideo() {
+    if (_stateControl == StateControl.ACTIVE) {
+      if (_videoController.value.isPlaying) {
+        _videoController.pause();
+      } else {
+        _videoController.play();
+      }
+    }
+  }
+
   listenerControls() async {
-    if (videoController != null && videoController.value.initialized) {
-      // print(" Starting ... ");
-      if (videoController.value.position != null &&
-          videoController.value.duration != null) {
-        isShowThumnail = false;
-        if (mounted && videoController.value.isPlaying) {
+    if (_videoController != null && _videoController.value.initialized) {
+      if (_videoController.value.position != null && _videoController.value.duration != null) {
+        if (_videoController.value.isPlaying) {
           updateTimePostion();
         }
-        // if(videoController.value.isPlaying)
-        // {
-        //   bool isKeptOn = await Screen.isKeptOn;
-        //   if (!isKeptOn) {
-        //     Screen.keepOn(true);
-        //   }
-        // }
+      }else{
+        _stateControl = StateControl.DONE; 
       }
+    } else {
+      _stateControl = StateControl.INIT;
     }
   }
 
   updateTimePostion() {
     setState(() {
-      currentPosition = (videoController.value.position.inSeconds ?? 0) /
-          videoController.value.duration.inSeconds;
-      _buffering = videoController.value.isBuffering;
-      _currentPositionString = formatDuration(videoController.value.position);
-      _remainingString = formatDuration(
-          videoController.value.duration - videoController.value.position);
+      if ((_videoController.value.duration.inMilliseconds - 600) <= _videoController.value.position.inMilliseconds) {
+        _videoController.pause();
+        _showControls = true;
+        _stateControl = StateControl.DONE;
+      }
+
+      _currentPosition        = (_videoController.value.position.inSeconds ?? 0) / _videoController.value.duration.inSeconds;
+      _currentPositionString  = formatDuration(_videoController.value.position);
+      _remainingString        = formatDuration(_videoController.value.duration - _videoController.value.position);
     });
   }
+  
+  //--------------------------------------------------------- 
+  //-----------------------Function Render ------------------
+  //---------------------------------------------------------
 
-  tapLayout() {
-    onTapAction();
-    if (videoController != null &&
-        videoController.value.initialized &&
-        !videoController.value.isPlaying) {
-      videoController.play();
-    }
-  }
-
+  //-----------------------Render BUILD----------------------
   @override
   Widget build(BuildContext context) {
     return Stack(
       children: <Widget>[
-        isShowThumnail ? CachedNetworkImage(
-          imageUrl: widget.urlImageThumnail ?? "http://i3.ytimg.com/vi/D86RtevtfrA/hqdefault.jpg",
-          width: widget.width,
-          height: widget.height,
-          fit: BoxFit.cover,
-        ) : SizedBox(),
-        _showControls
-            ? Container(
-                // color: Color(0x88000000),
-                height: widget.height,
-                width: widget.width,
-              )
-            : Container(),
+        (_stateControl != StateControl.ACTIVE)
+          ? CachedNetworkImage(
+              imageUrl: widget.urlImageThumnail ??
+                  "http://i3.ytimg.com/vi/D86RtevtfrA/hqdefault.jpg",
+              width: widget.width,
+              height: widget.height,
+              fit: BoxFit.cover,
+            )
+          : SizedBox(),
         GestureDetector(
-          onLongPress: () {},
           onTap: () {
             tapLayout();
           },
           child: AnimatedOpacity(
-            opacity: (_showControls || (videoController == null || !videoController.value.initialized)) ? 1.0 : 0.0,
+            opacity: (_showControls || _stateControl != StateControl.ACTIVE) ? 1.0 : 0.0,
             duration: Duration(milliseconds: 300),
             child: Material(
               color: Color(0x88000000),
               child: Stack(
                 children: <Widget>[
-                  (_showControls || videoController == null || !videoController.value.initialized)
-                      ? Stack(
-                          children: <Widget>[
-                            Container(
-                              width: widget.width,
-                              height: widget.height,
-                              child: Center(
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: <Widget>[
-                                    Expanded(
-                                      child: _rewind(),
-                                      flex: 4,
-                                    ),
-                                    Expanded(
-                                      child: _playButton(),
-                                      flex: 2,
-                                    ),
-                                    Expanded(
-                                      child: _fastForward(),
-                                      flex: 4,
-                                    )
-                                  ],
-                                ),
+                  (_showControls || _stateControl != StateControl.ACTIVE)
+                 ? Stack(
+                    children: <Widget>[
+                      Container(
+                        width: widget.width,
+                        height: widget.height,
+                        child: Center(
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: <Widget>[
+                              Expanded(
+                                child: _fastRewind(),
+                                flex: 4,
                               ),
-                            ),
-                            _buildBottomControls(),
-                            Positioned(
-                              child: _buildAppBar(context),
-                              top: 0,
-                            )
-                          ],
-                        )
-                      : Container(
-                          width: widget.width,
-                          height: widget.height,
-                          child: Center(
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: <Widget>[
-                                Expanded(
-                                  child: InkWell(
-                                    onTap: () {
-                                      tapLayout();
-                                    },
-                                    onDoubleTap: actionFastRewind,
-                                    child: Container(
-                                      color: Colors.transparent,
-                                    ),
-                                  ),
-                                  flex: 1,
-                                ),
-                                Expanded(
-                                  child: InkWell(
-                                    onTap: () {
-                                      tapLayout();
-                                    },
-                                    onDoubleTap: actionFastForward,
-                                    child: Container(
-                                      color: Colors.transparent,
-                                    ),
-                                  ),
-                                  flex: 1,
-                                )
-                              ],
-                            ),
+                              Expanded(
+                                child: _playButton(),
+                                flex: 2,
+                              ),
+                              Expanded(
+                                child: _fastForward(),
+                                flex: 4,
+                              )
+                            ],
                           ),
                         ),
+                      ),
+                      _buildBottomControls(),
+                      Positioned(
+                        child: _buildAppBar(context),
+                        top: 0,
+                      )
+                    ],
+                  ) : 
+                  Container(
+                    width: widget.width,
+                    height: widget.height,
+                    child: Center(
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: <Widget>[
+                          Expanded(
+                            child: InkWell(
+                              onTap: () {
+                                tapLayout();
+                              },
+                              onDoubleTap: (){
+                                actionFastForwardAndRewind(stateActionPlayer: StateActionPlayer.FAST_REWIND);
+                              },
+                              child: Container(
+                                color: Colors.transparent,
+                              ),
+                            ),
+                            flex: 1,
+                          ),
+                          Expanded(
+                            child: InkWell(
+                              onTap: () {
+                                tapLayout();
+                              },
+                              onDoubleTap: (){
+                                actionFastForwardAndRewind(stateActionPlayer: StateActionPlayer.FAST_FORWARD);
+                              },
+                              child: Container(
+                                color: Colors.transparent,
+                              ),
+                            ),
+                            flex: 1,
+                          )
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
           ),
         ),
-        
       ],
     );
   }
 
-  actionFastForward() {
-    if (mounted) {
-      if (videoController != null) {
-        videoController.seekTo(
-          Duration(seconds: videoController.value.position.inSeconds + 5),
-        );
-        Timer(Duration(seconds: 1), () {
-          updateTimePostion();
-        });
-      }
-    }
-  }
-
-  actionFastRewind() {
-    if (mounted) {
-      if (videoController != null) {
-        videoController.seekTo(
-          Duration(seconds: videoController.value.position.inSeconds - 5),
-        );
-        Timer(Duration(seconds: 1), () {
-          updateTimePostion();
-        });
-      }
-    }
-  }
-
-  Widget _fastForward() {
-    return Stack(
-      children: <Widget>[
-        GestureDetector(
-           onTap: () {
-            onTapAction(isShowControl: false);
-            },
-          onDoubleTap: actionFastForward,
-          child: Container(
-            color: Colors.transparent,
-            // width: _width / 2.5,
-            // height: _height - 80,
-          ),
-        ),
-        (videoController != null && videoController.value.initialized) ? 
-          Center(
-          child: GestureDetector(
-            onTap: () {
-              if (widget.playCtrDelegate != null) {
-                widget.playCtrDelegate.nextVideo();
-              }
-            },
-            child: _showControls
-                ? Center(
-                    child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: <Widget>[
-                      Icon(
-                        Icons.fast_forward,
-                        size: 40.0,
-                        color: Colors.white,
-                      ),
-                    ],
-                  ))
-                : Container(),
-          ),
-        ) : SizedBox(),
-      ],
-    );
-  }
-
-  Widget _rewind() {
-    return Stack(
-      children: <Widget>[
-        GestureDetector(
+ //-----------------------Render button Subtitle----------------------
+  Widget _buildButtonSubtitles() {
+    return Align(
+      alignment: Alignment.topRight,
+      child: Padding(
+        padding: EdgeInsets.only(right: (widget.isFullScreen ? 30 : 10.0)),
+        child: GestureDetector(
           onTap: () {
-            onTapAction(isShowControl: false);
-            },
-          onDoubleTap: actionFastRewind,
-          child: Container(
-            color: Colors.transparent,
-          ),
-        ),
-         (videoController != null && videoController.value.initialized) ? 
-          Center(
-          child: GestureDetector(
-            onTap: () {
-               if (widget.playCtrDelegate != null) {
-                widget.playCtrDelegate.previousVideo();
-              }
-            },
-            child: _showControls
-                ? Center(
-                    child: GestureDetector(
-                    child: Icon(
-                      Icons.fast_rewind,
-                      size: 40.0,
-                      color: Colors.white,
-                    ),
-                    onTap: () {
-                      if (widget.playCtrDelegate != null) {
-                        widget.playCtrDelegate.previousVideo();
-                      }
-                    },
-                  ))
-                : Container(),
-          ),
-        ) : SizedBox()
-      ],
-    );
-  }
-
-  void onTapAction({bool isShowControl = true}) {
-    if (_timer != null) _timer.cancel();
-    if (mounted) {
-      setState(() {
-        _showControls = isShowControl;
-        widget.controlsShowingCallback(_showControls);
-      });
-    }
-    if (_showControls) {
-      _timer = Timer(widget.controlsTimeOut, () {
-        if (mounted) {
-          setState(() {
-            _showControls = false;
-            widget.controlsShowingCallback(_showControls);
-          });
-        }
-      });
-    }
-    // if (!videoController.value.isPlaying) videoController.play();
-  }
-
-  Widget _playButton() {
-    return (videoController != null && videoController.value.initialized)
-        ? IgnorePointer(
-            ignoring: !_showControls,
-            child: Material(
-              borderRadius: BorderRadius.circular(100.0),
-              color: Colors.transparent,
-              child: GestureDetector(
-                  // splashColor: Colors.grey[350],
-                  // borderRadius: BorderRadius.circular(30.0),
-                  onTap: () {
-                    print("Tap Player");
-                    
-                    onTapAction();
-
-                    if (videoController?.value?.initialized ?? false) {
-                      if (widget.playCtrDelegate != null) {
-                        bool oldStateLive = videoController.value.isPlaying;
-                        bool newStateLive = widget.playCtrDelegate
-                            .playVideo(videoController.value.isPlaying);
-                        if (oldStateLive == newStateLive) {
-                          print(" NOT CALL DELEGARE ");
-                          playVideo();
-                        } else {
-                          print(" IS CALL DELEGARE ");
-                        }
-                      }
-                    }
-                  },
-                  child: _buffering
-                      ? CircularProgressIndicator()
-                      : ((videoController != null &&
-                              videoController.value.initialized &&
-                              videoController.value.isPlaying)
-                          ? Image.asset(
-                              ICON_PAUSE,
-                              fit: BoxFit.contain,
-                              height: 29,
-                              width: 29,
-                              color: Colors.white,
-                            )
-                          : Image.asset(
-                              ICON_PLAY_DETAIL,
-                              fit: BoxFit.contain,
-                              height: 29,
-                              width: 29,
-                              color: Colors.white,
-                            ))
-
-                  // Icon(
-                  //     (videoController != null &&
-                  //             videoController.value.initialized &&
-                  //             videoController.value.isPlaying)
-                  //         ? Icons.pause
-                  //         : Icons.play_arrow,
-                  //     color: Colors.white,
-                  //     size: 40.0,
-                  //   ),
-
-                  ),
-            ),
-          )
-        : AspectRatio(
-            aspectRatio: 16 / 9,
-            child: Center(
-              child: CircularProgressIndicator(),
-            ),
-          );
-  }
-
-  Widget _buildBottomControls() {
-    int totalLength = 0;
-
-    if (videoController != null && videoController.value.initialized) {
-      totalLength = videoController.value.duration.inSeconds;
-    }
-
-    return Positioned(
-      bottom: 5.0,
-      left: 0.0,
-      child: Center(
-        child: Container(
-          margin:
-              EdgeInsets.only(left: 20, right: widget.isFullScreen ? 50 : 20),
-          // color: Colors.black38,
-          width: widget.width - 20,
-          child: Padding(
-            padding: EdgeInsets.only(bottom: 10.0),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: <Widget>[
-                Expanded(
-                  flex: 1,
-                  child: Center(
-                    child: Text(
-                      _currentPositionString,
-                      style: TextStyle(color: Colors.white, fontSize: 12.0),
-                    ),
-                  ),
-                ),
-                Expanded(
-                  flex: widget.isFullScreen ? 15 : 6,
-                  child: Container(
-                    padding: EdgeInsets.only(top: 5),
-                    height: 20,
-                    child: Slider(
-                      activeColor: Colors.red,
-                      inactiveColor: Colors.grey,
-                      value: currentPosition,
-                      onChanged: (position) {
-                        if (videoController != null) {
-                          onTapAction();
-                          videoController.seekTo(
-                            Duration(
-                              seconds: (position * totalLength).floor(),
-                            ),
-                          );
-                          if(!videoController.value.isPlaying)
-                            videoController.play();
-                          if (mounted) {
-                            setState(() {
-                              currentPosition = position;
-                            });
-                          }
-                        }
-                      },
-                    ),
-                  ),
-                ),
-                Expanded(
-                  flex: 1,
-                  child: Center(
-                    child: Text(
-                      _remainingString,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 12.0,
-                      ),
-                    ),
-                  ),
-                ),
-                Expanded(
-                  flex: 1,
-                  child: InkWell(
-                    onTap: () async{
-                      if (widget.playCtrDelegate != null && mounted) {
-                        bool _isFull = await widget.playCtrDelegate
-                            .fullscreen(widget.isFullScreen);
-                        setState(() {
-                          widget.isFullScreen = _isFull;
-                        });
-                      }
-                    },
-                    child: Container(
-                      margin:
-                          EdgeInsets.only(right: widget.isFullScreen ? 20 : 10),
-                      child: Align(
-                        alignment: Alignment.center,
-                        child: Icon(
-                          widget.isFullScreen
-                              ? Icons.fullscreen_exit
-                              : Icons.fullscreen,
-                          size: 20,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+            if (_stateControl != StateControl.INIT && widget.playCtrDelegate != null && mounted) {
+              setState(() {
+                _isShowSub = widget.playCtrDelegate.subvideo(_isShowSub);
+              });
+            }
+          },
+          child: Icon(
+            Icons.subtitles,
+            size: 30.0,
+            color: _isShowSub ? Colors.red : Colors.white,
           ),
         ),
       ),
     );
   }
 
-  void togglePlaying() {
-    if (videoController != null && videoController.value.initialized) {
-      if (videoController.value.isPlaying == true) {
-        videoController.pause();
-        if (mounted) {
-          setState(() {
-            _showControls = true;
-            widget.controlsShowingCallback(_showControls);
-          });
-        }
-      } else {
-        videoController.play();
-      }
-    }
-  }
-
+//-----------------------Render app bar----------------------
   Widget _buildAppBar(BuildContext context) {
     return Container(
       width: widget.width,
@@ -650,53 +357,330 @@ class _ControlsState extends State<Controls> {
                   ),
                 ),
               )),
-          _buildSubtitles()
+          _buildButtonSubtitles()
         ],
       ),
     );
   }
 
-  Widget _buildSubtitles() {
-    return Align(
-        alignment: Alignment.topRight,
-        child: Padding(
-          padding: EdgeInsets.only(right: (widget.isFullScreen ? 30 : 10.0)),
-          child: GestureDetector(
-              onTap: () {
-                if (videoController!=null && videoController.value.initialized && widget.playCtrDelegate != null && mounted) {
-                  setState(() {
-                    isShowSub = widget.playCtrDelegate.subvideo(isShowSub);
-                  });
-                  // isShowSub = (isShowSub != showSub) ? showSub : isShowSub;
-                }
-              },
-              child: Icon(
-                Icons.subtitles,
-                size: 30.0,
-                color: isShowSub ? Colors.red : Colors.white,
-              )),
-        ));
+//-----------------------Render fastforward----------------------
+  Widget _fastForward() {
+    return Stack(
+      children: <Widget>[
+        GestureDetector(
+          onTap: () {
+            onTapAction(isShowControl: false);
+          },
+          onDoubleTap: (){
+            actionFastForwardAndRewind(stateActionPlayer: StateActionPlayer.FAST_FORWARD);
+          },
+          child: Container(
+            color: Colors.transparent,
+          )
+        ),
+        (_stateControl != StateControl.INIT)
+            ? Center(
+                child: GestureDetector(
+                  onTap: () {
+                    if (widget.playCtrDelegate != null) {
+                      widget.playCtrDelegate.nextVideo();
+                    }
+                  },
+                  child: Center(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        Icon(
+                          Icons.fast_forward,
+                          size: 40.0,
+                          color: Colors.white,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              )
+            : SizedBox(),
+      ],
+    );
   }
-//  void shareVideo() {
-//    final RenderBox box = context.findRenderObject();
-//    Share.share("https://youtu.be/${widget.videoId}",
-//        sharePositionOrigin: box.localToGlobal(Offset.zero) & box.size);
-//  }
+
+//-----------------------Render fastrewind----------------------
+  Widget _fastRewind() {
+    return Stack(
+      children: <Widget>[
+        GestureDetector(
+          onTap: () {
+            onTapAction(isShowControl: false);
+          },
+          onDoubleTap: (){
+            actionFastForwardAndRewind(stateActionPlayer: StateActionPlayer.FAST_REWIND);
+          },
+          child: Container(
+            color: Colors.transparent,
+          )
+        ),
+        (_stateControl != StateControl.INIT)
+            ? Center(
+                child: GestureDetector(
+                  onTap: () {
+                    if (widget.playCtrDelegate != null &&
+                        _stateControl == StateControl.ACTIVE) {
+                      widget.playCtrDelegate.previousVideo();
+                    }
+                  },
+                  child: Icon(
+                    Icons.fast_rewind,
+                    size: 40.0,
+                    color: Colors.white,
+                  ),
+                ),
+              )
+            : SizedBox()
+      ],
+    );
+  }
+
+//-----------------------Render button middle----------------------
+  Widget _playButton() {
+    return (_stateControl != StateControl.INIT)
+        ? Material(
+            borderRadius: BorderRadius.circular(100.0),
+            color: Colors.transparent,
+            child: GestureDetector(
+                onTap: () {
+                  if (_stateControl != StateControl.INIT) {
+                    if (widget.playCtrDelegate != null) {
+                      if (_stateControl == StateControl.ACTIVE) {
+                        bool oldStateLive = _videoController.value.isPlaying;
+                        bool newStateLive = widget.playCtrDelegate
+                            .playVideo(_videoController.value.isPlaying);
+                        if (oldStateLive == newStateLive) {
+                          playVideo();
+                        } 
+                      } else {
+                        widget.playCtrDelegate.replay();
+                        _stateControl = StateControl.INIT;
+                        _flagAddListener = false;
+                      }
+                    }
+                  }
+                  onTapAction();
+                },
+                child: (_stateControl == StateControl.DONE)
+                ? Icon(
+                    Icons.replay,
+                    size: 29,
+                    color: Colors.white,
+                  )
+                : ((_videoController != null &&
+                        _videoController.value.initialized &&
+                        _videoController.value.isPlaying)
+                    ? Image.asset(
+                        ICON_PAUSE,
+                        fit: BoxFit.contain,
+                        height: 29,
+                        width: 29,
+                        color: Colors.white,
+                    )
+                    : Image.asset(
+                        ICON_PLAY_DETAIL,
+                        fit: BoxFit.contain,
+                        height: 29,
+                        width: 29,
+                        color: Colors.white,
+                    )
+                  ),
+            ),
+          )
+        : AspectRatio(
+            aspectRatio: 16 / 9,
+            child: Center(
+              child: CircularProgressIndicator(),
+            ),
+          );
+  }
+
+//-----------------------Render bottom control----------------------
+  Widget _buildBottomControls() {
+    return Positioned(
+      bottom: 5.0,
+      left: 0.0,
+      child: Center(
+        child: Container(
+          margin: EdgeInsets.only(left: 20, right: widget.isFullScreen ? 50 : 20),
+          width: widget.width - 20,
+          child: Padding(
+            padding: EdgeInsets.only(bottom: 10.0),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: <Widget>[
+                Expanded(
+                  flex: 1,
+                  child: Center(
+                    child: Text(
+                      _currentPositionString,
+                      style: TextStyle(color: Colors.white, fontSize: 12.0),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: widget.isFullScreen ? 15 : 6,
+                  child: Container(
+                    padding: EdgeInsets.only(top: 5),
+                    height: 20,
+                    child: Slider(
+                      activeColor: Colors.red,
+                      inactiveColor: Colors.grey,
+                      value: _currentPosition,
+                      onChanged: (position) {
+                        if (_videoController != null && _stateControl != StateControl.INIT) {
+                          if ((_videoController.value.duration.inMilliseconds - 700) <= (position * _videoController.value.duration.inSeconds).floor() * 1000) {
+                            _handleDone();
+                          } else {
+                            onTapAction();
+                            _videoController.seekTo(Duration(seconds: (position * _videoController.value.duration.inSeconds).floor()));
+                            
+                            if (!_videoController.value.isPlaying) {
+                              _videoController.play();
+                            }
+                            
+                            if (mounted) {
+                              setState(() {
+                                _stateControl = StateControl.ACTIVE;
+                                _currentPosition = position;
+                              });
+                            }
+                          }
+                        }
+                      },
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 1,
+                  child: Center(
+                    child: Text(
+                      _remainingString,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12.0,
+                      ),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 1,
+                  child: InkWell(
+                    onTap: ()  {
+                      if (widget.playCtrDelegate != null && mounted) {
+                        setState(() async {
+                          widget.isFullScreen = await widget.playCtrDelegate.fullscreen(widget.isFullScreen);
+                        });
+                      }
+                    },
+                    child: Container(
+                      margin:
+                          EdgeInsets.only(right: widget.isFullScreen ? 20 : 10),
+                      child: Align(
+                        alignment: Alignment.center,
+                        child: Icon(
+                          widget.isFullScreen
+                              ? Icons.fullscreen_exit
+                              : Icons.fullscreen,
+                          size: 20,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+ //---------------------------------------------------------
+  //-----------------------Function Handle------------------
+  //---------------------------------------------------------
+
+  onTapAction({bool isShowControl = true}) {
+    if (_stateControl == StateControl.ACTIVE) {
+      if (_timer != null) _timer.cancel();
+
+      if (mounted) {
+        setState(() {
+          _showControls = isShowControl;
+          widget.controlsShowingCallback(_showControls);
+        });
+      }
+
+      if (_showControls) {
+        _timer = Timer(widget.controlsTimeOut, () {
+          if (mounted) {
+            setState(() {
+              _showControls = false;
+              widget.controlsShowingCallback(_showControls);
+            });
+          }
+        });
+      }
+    }
+  }
+
+  tapLayout() {
+    onTapAction();
+    if (_stateControl == StateControl.ACTIVE && !_videoController.value.isPlaying) {
+      _videoController.play();
+    }
+  }
+
+  actionFastForwardAndRewind({StateActionPlayer stateActionPlayer}) {
+    if (mounted) {
+      if (_videoController != null && _stateControl != StateControl.INIT) {
+        int handle = (stateActionPlayer == StateActionPlayer.FAST_FORWARD) ? 5 : (-5);
+        int _seconds = _videoController.value.position.inSeconds + handle;
+        if ((_videoController.value.duration.inMilliseconds - 700) <= (_seconds * 1000)) {
+          _handleDone();
+        }else{
+           _videoController.seekTo(Duration(seconds: _seconds));
+           _stateControl = StateControl.ACTIVE;
+          Timer(Duration(seconds: 1), () {
+            updateTimePostion();
+          });
+        }
+      }
+    }
+  }
+  
+  _handleDone(){
+    _videoController.pause();
+    setState(() {
+      _stateControl = StateControl.DONE;
+      _remainingString = "00:00";
+      _currentPositionString = formatDuration(_videoController.value.duration);
+      _videoController.seekTo(Duration(milliseconds: _videoController.value.duration.inMilliseconds-400));
+      _currentPosition = 1;
+    });
+  }
 
   String formatDuration(Duration position) {
-    final ms = position.inMilliseconds;
-    int seconds = ms ~/ 1000;
-    final int hours = seconds ~/ 3600;
-    seconds = seconds % 3600;
-    var minutes = seconds ~/ 60;
-    seconds = seconds % 60;
-    final hoursString = hours >= 10 ? '$hours' : hours == 0 ? '00' : '0$hours';
-    final minutesString =
-        minutes >= 10 ? '$minutes' : minutes == 0 ? '00' : '0$minutes';
-    final secondsString =
-        seconds >= 10 ? '$seconds' : seconds == 0 ? '00' : '0$seconds';
-    final formattedTime =
-        '${hoursString == '00' ? '' : hoursString + ':'}$minutesString:$secondsString';
+    final ms              = position.inMilliseconds;
+    int seconds           = ms ~/ 1000;
+    final int hours       = seconds ~/ 3600;
+    seconds               = seconds % 3600;
+    var minutes           = seconds ~/ 60;
+    seconds               = seconds % 60;
+    final hoursString     = hours >= 10 ? '$hours' : hours == 0 ? '00' : '0$hours';
+    final minutesString   = minutes >= 10 ? '$minutes' : minutes == 0 ? '00' : '0$minutes';
+    final secondsString   = seconds >= 10 ? '$seconds' : seconds == 0 ? '00' : '0$seconds';
+    final formattedTime   = '${hoursString == '00' ? '' : hoursString + ':'}$minutesString:$secondsString';
     return formattedTime;
   }
+
 }
