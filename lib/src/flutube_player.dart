@@ -180,13 +180,10 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
   initState() {
     super.initState();
     try {
-      if (this.videoController != null) {
-        disposeController("initState");
+      if (this.videoController != null || chewieController != null) {
+        disposeController();
       }
-      if (chewieController != null) {
-        chewieController.dispose();
-      }
-    } catch (e) {}
+    } catch (e) {}  
     callBackVideoController = CallBackVideoController();
     statePlaying = StatePlaying();
     player = StatePlayer();
@@ -211,19 +208,28 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
       this.videoController.removeListener(_endListener);
       this.videoController.removeListener(_startListener);
     }
-
-    // print(" what is dispose flutube!");
+    if(this.chewieController != null){
+      if(this.chewieController.videoPlayerController.value.isPlaying){
+        this.chewieController.videoPlayerController.pause();
+      }
+      this.chewieController.dispose();
+    }
     super.dispose();
   }
 
-  disposeController(String func_name) {
+  disposeController() {
     try {
       if (this.videoController != null && statePlaying.hashCodeWidget != null && statePlaying.hashCodeWidget != widget.playCtrDelegate.hashCode) {
         this.videoController.removeListener(_playingListener);
         this.videoController.removeListener(_errorListener);
         this.videoController.removeListener(_endListener);
         this.videoController.removeListener(_startListener);
-        // this.videoController.dispose();
+      }
+      if(this.chewieController != null){
+        if(this.chewieController.videoPlayerController.value.isPlaying){
+          this.chewieController.videoPlayerController.pause();
+        }
+        this.chewieController.dispose();
       }
     } catch (e) {}
   }
