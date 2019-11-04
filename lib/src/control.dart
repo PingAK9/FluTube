@@ -200,7 +200,6 @@ class _ControlsState extends State<Controls> {
   Widget build(BuildContext context) {
     return Stack(
       children: <Widget>[
-        _renderAreaOfActionDoubleTap(),
         (_stateControl != StateControl.ACTIVE)
           ? CachedNetworkImage(
               imageUrl: widget.urlImageThumnail ??
@@ -210,6 +209,7 @@ class _ControlsState extends State<Controls> {
               fit: BoxFit.cover,
             )
           : SizedBox(),
+        _renderAreaOfActionDoubleTap(),
         GestureDetector(
           onTap: () {
             tapLayout();
@@ -447,8 +447,7 @@ class _ControlsState extends State<Controls> {
             ? Center(
                 child: GestureDetector(
                   onTap: () {
-                    if (widget.playCtrDelegate != null &&
-                        _stateControl == StateControl.ACTIVE) {
+                    if (widget.playCtrDelegate != null) {
                       widget.playCtrDelegate.previousVideo();
                     }
                   },
@@ -721,7 +720,7 @@ Widget _renderAreaOfActionDoubleTap(){
     }
   }
 
-  actionFastForwardAndRewind({StateActionPlayer stateActionPlayer, StateDoubleTap isStateDoubleTap,isShowIconFast = false}) {
+  actionFastForwardAndRewind({StateActionPlayer stateActionPlayer, StateDoubleTap isStateDoubleTap,isShowIconFast = false}) async {
     _isShowIconFast = isShowIconFast;    
     onDoubleTap(isStateDoubleTap);
     
@@ -733,12 +732,13 @@ Widget _renderAreaOfActionDoubleTap(){
         if ((_videoController.value.duration.inMilliseconds - 700) <= (_seconds * 1000)) {
           _handleDone();
         }else{
-          _videoController.seekTo(Duration(seconds: _seconds));
           _stateControl = StateControl.ACTIVE;
-
-          Timer(Duration(seconds: 1), () {
-            updateTimePostion();
-          });
+          await _videoController.seekTo(Duration(seconds: _seconds));
+          if(!_videoController.value.isPlaying){
+            _videoController.play();
+          }
+          updateTimePostion();
+          refeshWidget();
         }
       }
     }
@@ -757,7 +757,7 @@ Widget _renderAreaOfActionDoubleTap(){
   }
 
   onDoubleTap(StateDoubleTap isStateDoubleTap){
-    if (_stateControl == StateControl.ACTIVE) {
+    if (_stateControl != StateControl.INIT) {
       if (_timerDoubleTap != null) _timerDoubleTap.cancel();
       _stateDoubleTap = isStateDoubleTap;
       refeshWidget();
@@ -774,7 +774,7 @@ Widget _renderAreaOfActionDoubleTap(){
 
   refeshWidget(){
     if (mounted) {
-        setState(() { });
+      setState(() {});
     }
   }
   String formatDuration(Duration position) {
