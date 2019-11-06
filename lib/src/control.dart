@@ -12,6 +12,8 @@ typedef YoutubeQualityChangeCallback(String quality, Duration position);
 typedef ControlsShowingCallback(bool showing);
 const String ICON_PLAY_DETAIL = "assets/images/icons/ic_play_detail.png";
 const String ICON_PAUSE = "assets/images/icons/ic_pause.png";
+const String ICON_NEXT = "assets/images/icons/ic_next.png";
+const String ICON_PRE = "assets/images/icons/ic_pre.png";
 
 class ControlsColor {
   final Color timerColor;
@@ -410,9 +412,11 @@ class _ControlsState extends State<Controls> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: <Widget>[
-                        Icon(
-                          Icons.skip_next,
-                          size: 40.0,
+                        Image.asset(
+                          ICON_NEXT,
+                          fit: BoxFit.contain,
+                          height: 30,
+                          width: 30,
                           color: Colors.white,
                         ),
                       ],
@@ -451,10 +455,12 @@ class _ControlsState extends State<Controls> {
                       widget.playCtrDelegate.previousVideo();
                     }
                   },
-                  child: Icon(
-                    Icons.skip_previous,
-                    size: 40.0,
-                    color: Colors.white,
+                  child: Image.asset(
+                      ICON_PRE,
+                      fit: BoxFit.contain,
+                      height: 30,
+                      width: 30,
+                      color: Colors.white,
                   ),
                 ),
               )
