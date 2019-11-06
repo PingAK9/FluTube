@@ -655,13 +655,28 @@ Widget _renderAreaOfActionDoubleTap(){
                     ),
                     color: Colors.white30,
                   ),
-                  child: _isShowIconFast ? Center(
-                    child: Icon(
-                      Icons.fast_rewind, 
-                      color: Colors.white60,
-                      size: 40.0
+                  child: Align(
+                    alignment: Alignment.center,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        Center(
+                          child: Icon(
+                            Icons.fast_rewind, 
+                            color: _isShowIconFast ? Colors.white60 : Colors.transparent,
+                            size: 40.0
+                          ),
+                        ),
+                        Text(
+                          "5 second",
+                          style: TextStyle(
+                            color : Colors.white,
+                            fontSize: 10
+                          ),
+                        )
+                      ],
                     ),
-                  ) : Container(color: Colors.transparent,),
+                  ),
                 ),
               ),
             flex: 4,
@@ -682,13 +697,28 @@ Widget _renderAreaOfActionDoubleTap(){
                   ),
                   color: Colors.white30,
                 ),
-                child: _isShowIconFast ? Center(
-                  child: Icon(
-                    Icons.fast_forward, 
-                    color: Colors.white60,
-                    size: 40.0
+                child: Align(
+                    alignment: Alignment.center,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        Center(
+                          child: Icon(
+                            Icons.fast_forward, 
+                            color: _isShowIconFast ? Colors.white60 : Colors.transparent,
+                            size: 40.0
+                          ),
+                        ),
+                        Text(
+                          "5 second",
+                          style: TextStyle(
+                            color : Colors.white,
+                            fontSize: 10
+                          ),
+                        )
+                      ],
+                    ),
                   ),
-                ) : Container(color: Colors.transparent,),
               ),
             ),
             flex: 4,
