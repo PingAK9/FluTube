@@ -524,7 +524,7 @@ class _ControlsState extends State<Controls> {
         : AspectRatio(
             aspectRatio: 16 / 9,
             child: Center(
-              child: CircularProgressIndicator(),
+              child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Colors.red)),
             ),
           );
   }
