@@ -34,7 +34,7 @@ class StatePlaying {
   StatePlaying._internal();
 }
 enum FlutubeState { ON, OFF } 
-enum FlutubeStateScreen { NEW, OLD} 
+enum FlutubeStateScreen { NEW, OLD, SPECIAL} 
 class StatePlayer {
   static StatePlayer instance;
 

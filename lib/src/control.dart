@@ -134,8 +134,9 @@ class _ControlsState extends State<Controls> {
     print("[control.dart]----------------deactive----------------");
     if (_videoController != null && _videoController.value.initialized) {
       _videoController.removeListener(listenerControls);
+      _videoController = null;
     }
-    if(StatePlayer.instance.stateScreen == FlutubeStateScreen.NEW) {
+    if(StatePlayer.instance.stateScreen == FlutubeStateScreen.SPECIAL) {
       StatePlayer.instance.statePlayer = FlutubeState.OFF;
     }
     super.deactivate();
@@ -783,7 +784,7 @@ Widget _renderAreaOfActionDoubleTap(){
   _handleDone(){
     _videoController.pause();
     setState(() {
-      StatePlayer.instance.stateScreen = FlutubeStateScreen.NEW;
+      StatePlayer.instance.stateScreen = FlutubeStateScreen.SPECIAL;
       _stateControl = StateControl.DONE;
       _remainingString = "00:00";
       _currentPositionString = formatDuration(_videoController.value.duration);
