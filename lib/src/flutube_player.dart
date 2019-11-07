@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutube/src/play_control_delegate.dart';
 import 'package:http/http.dart' as http;
 import 'package:video_player/video_player.dart';
+import 'package:youtube_extractor/youtube_extractor.dart';
 
 import 'callback_control.dart';
 import 'control.dart';
@@ -176,6 +177,7 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
   CallBackVideoController callBackVideoController;
   StatePlaying statePlaying;
   StatePlayer player;
+  var _extractor;
   @override
   initState() {
     super.initState();
@@ -184,6 +186,7 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
         disposeController();
       }
     } catch (e) {}  
+    _extractor = _extractor ?? YouTubeExtractor();
     callBackVideoController = CallBackVideoController();
     statePlaying = StatePlaying();
     player = StatePlayer();
@@ -335,13 +338,15 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
 
   _errorListener() {
     if (!this.videoController.value.hasError) return;
-    // TODO: check _errorListener - handle next and pre of player -- 02/11/2019
-    // print("--------------------- ERROR  2 ----------------------");
-    // print(statePlaying.idPlaying);
-    // print(widget._idVideo);
-    // print(player.statePlayer == FlutubeState.ON);
     if (statePlaying.hashCodeWidget == widget.playCtrDelegate.hashCode && player.statePlayer == FlutubeState.ON) {
-      _initialize(widget._videourls as String, widget.typeVideo);
+      if (videoController.value.errorDescription.contains("code: 403")){
+        _initialize(widget._videourls as String, widget.typeVideo);
+      }else{
+        this.videoController?.pause();
+        this.videoController = null;
+        chewieController = null;
+        _initialize(widget._videourls as String, widget.typeVideo);
+      }
     }
   }
 
@@ -378,7 +383,6 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
       this.videoController = null;
       _initialize(widget._videourls as String, widget.typeVideo);
       });
-    
   }
 
 
@@ -416,18 +420,9 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
         controlsTimeOut: const Duration(seconds: 2),
         switchFullScreenOnLongPress: false,
         controlsShowingCallback: (showing) {
-          Timer(Duration(milliseconds: 600), () {
-            // if (mounted)
-            //   setState(() {
-            //     showControl = showing;
-            //     // _showVideoProgressBar = !showing;
-            //   });
-          });
         },
         fullScreenCallback: () async {
-          // await _pushFullScreenWidget(context);
         },
-        // hideShareButton: widget.hideShareButton,
       );
       return Stack(
         children: <Widget>[
@@ -447,55 +442,10 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
   Future<String> _fetchVideoURL(String yt, String type) async {
     if(type.toUpperCase() == "MP4") return yt;
     if(type.toUpperCase() == "YOUTUBE") { yt = "https://www.youtube.com/watch?v=" + yt;}
+
     // print("-------------------------------------- FETCH VIDEO -----------------------------------");
-    final response = await http.get(yt);
-
-    // print("========================response.body========================");
-    // print(response.body);
-
-    Iterable parseAll = _allStringMatches(
-        response.body, RegExp("\"url_encoded_fmt_stream_map\":\"([^\"]*)\""));
-
-    // print("========================parseAll 1========================");
-    // printWrapped(parseAll.toString());
-
-    final Iterable<String> parse =
-        _allStringMatches(parseAll.toList()[0], RegExp("url=(.*)"));
-
-    // print("========================parse========================");
-    // printWrapped(parse.toString());
-
-    final List<String> urls = parse.toList()[0].split('url=');
-
-    // print("========================urls========================");
-    // printWrapped(urls.toString());
-
-
-    parseAll = _allStringMatches(urls[1], RegExp("([^&,]*)[&,]"));
-
-    // print("========================parseAll 2========================");
-    // print(parseAll);
-
-    if (parseAll.isEmpty) parseAll = [urls[1]];
-
-    // print("========================parseAll 2.1========================");
-    // printWrapped(parseAll.toString());
-
-    String finalUrl = Uri.decodeFull(parseAll.toList()[0]);
-
-    // print("========================finalUrl========================");
-    // printWrapped(finalUrl);
-
-
-    if (finalUrl.indexOf('\\u00') > -1)
-      finalUrl = finalUrl.substring(0, finalUrl.indexOf('\\u00'));
-
-
-    // print("========================finalUrl 1.1========================");
-    // printWrapped(finalUrl);
-
-// print("-------------------------------------- FETCH DONE -----------------------------------");
-    return finalUrl;
+    var result = await _extractor.getMediaStreamsAsync(widget._idVideo);
+    return result.muxed.first.url;
   }
 
   Iterable<String> _allStringMatches(String text, RegExp regExp) =>

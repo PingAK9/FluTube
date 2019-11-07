@@ -669,7 +669,7 @@ Widget _renderAreaOfActionDoubleTap(){
                           ),
                         ),
                         Text(
-                          "5 second",
+                          "5 seconds",
                           style: TextStyle(
                             color : Colors.white,
                             fontSize: 10
@@ -711,7 +711,7 @@ Widget _renderAreaOfActionDoubleTap(){
                           ),
                         ),
                         Text(
-                          "5 second",
+                          "5 seconds",
                           style: TextStyle(
                             color : Colors.white,
                             fontSize: 10
