@@ -178,6 +178,7 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
   StatePlaying statePlaying;
   StatePlayer player;
   var _extractor;
+  get checkIsPlaying => this.videoController != null && this.videoController.value != null && this.videoController.value.isPlaying;
   @override
   initState() {
     super.initState();
@@ -274,7 +275,7 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
   }
 
   _playingListener() {
-    if (isPlaying != this.videoController.value.isPlaying && mounted) {
+    if (this.checkIsPlaying && this.videoController.value.isPlaying != isPlaying && mounted) {
       setState(() {
         isPlaying = this.videoController.value.isPlaying;
       });
@@ -440,12 +441,12 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
   }
 
   Future<String> _fetchVideoURL(String yt, String type) async {
-    if(type.toUpperCase() == "MP4") return yt;
-    if(type.toUpperCase() == "YOUTUBE") { yt = "https://www.youtube.com/watch?v=" + yt;}
-
     // print("-------------------------------------- FETCH VIDEO -----------------------------------");
-    var result = await _extractor.getMediaStreamsAsync(widget._idVideo);
-    return result.muxed.first.url;
+    if(type.toUpperCase() == "MP4") return yt;
+    var result = await _extractor.getMediaStreamsAsync(yt);
+    return result != null && result.muxed != null && result.muxed.first != null && result.muxed.first.url != null ? result.muxed.first.url : "";
+    
+    // result?.muxed?.first?.url ?? "";
   }
 
   Iterable<String> _allStringMatches(String text, RegExp regExp) =>
