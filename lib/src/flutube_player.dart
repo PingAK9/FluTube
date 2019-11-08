@@ -443,7 +443,9 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
   Future<String> _fetchVideoURL(String yt, String type) async {
     // print("-------------------------------------- FETCH VIDEO -----------------------------------");
     if(type.toUpperCase() == "MP4") return yt;
+    print("------>>>> _extractor Start: [${DateTime.now().toString()}] <<<<------");
     var result = await _extractor.getMediaStreamsAsync(yt);
+    print("------>>>> _extractor End: [${DateTime.now().toString()}] <<<<------");
     return result != null && result.muxed != null && result.muxed.first != null && result.muxed.first.url != null ? result.muxed.first.url : "";
     
     // result?.muxed?.first?.url ?? "";
