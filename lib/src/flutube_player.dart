@@ -165,6 +165,7 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
   VideoPlayerController videoController;
   ChewieController chewieController;
   bool isPlaying = false;
+  bool isErrorInit = false;
   bool _needsShowThumb;
   int _currentlyPlaying = 0; // Track position of currently playing video
   double widthCurrent;
@@ -241,6 +242,14 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
   void _initialize(String _url, String type) {
     print("[Flutube_player.dart] _initialize--------------------URL VIDEO: $_url");
     statePlaying.hashCodeWidget = widget.playCtrDelegate.hashCode;
+
+    if(_url == null || _url == ""){
+      setState(() {
+        isErrorInit = true;
+        return;
+      });
+    }
+
     _fetchVideoURL(_url, type).then((url) {
       this.videoController = VideoPlayerController.network(url)
         ..addListener(_playingListener)
@@ -389,7 +398,7 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.showThumb && !isPlaying && _needsShowThumb) {
+    if (widget.showThumb && !isPlaying && _needsShowThumb || isErrorInit) {
       return Center(
         child: Container(
           width: MediaQuery.of(context).size.width,
@@ -398,6 +407,19 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
             child: Stack(
               fit: StackFit.expand,
               children: <Widget>[
+                isErrorInit ?
+                Container(
+                  color: Colors.black,
+                  child:  Center(
+                    child: Text(
+                      "Video not support.", 
+                      style: TextStyle(
+                        color: Colors.white, 
+                        fontSize: 15
+                      ),
+                    ),
+                  )
+                ):
                 CachedNetworkImage(
                   imageUrl: widget.urlImageThumnail ?? "http://i3.ytimg.com/vi/D86RtevtfrA/hqdefault.jpg",
                   width: widget.width,
@@ -441,14 +463,21 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
   }
 
   Future<String> _fetchVideoURL(String yt, String type) async {
-    // print("-------------------------------------- FETCH VIDEO -----------------------------------");
-    if(type.toUpperCase() == "MP4") return yt;
-    print("------>>>> _extractor Start: [${DateTime.now().toString()}] <<<<------");
-    var result = await _extractor.getMediaStreamsAsync(yt);
-    print("------>>>> _extractor End: [${DateTime.now().toString()}] <<<<------");
-    return result != null && result.muxed != null && result.muxed.first != null && result.muxed.first.url != null ? result.muxed.first.url : "";
     
-    // result?.muxed?.first?.url ?? "";
+    if(type.toUpperCase() == "MP4") return yt;
+
+    print("------>>>> _extractor Start: [${DateTime.now().toString()}] <<<<------");
+    try {
+      var result = await _extractor.getMediaStreamsAsync(yt);
+      
+      print("------>>>> _extractor End: [${DateTime.now().toString()}] <<<<------");
+      return result != null && result.muxed != null && result.muxed.first != null && result.muxed.first.url != null ? result.muxed.first.url : "";
+
+    } catch (e) {
+      setState(() {
+        isErrorInit = true;
+      });
+    }
   }
 
   Iterable<String> _allStringMatches(String text, RegExp regExp) =>
