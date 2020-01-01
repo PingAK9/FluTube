@@ -49,6 +49,7 @@ class Controls extends StatefulWidget {
   final Duration controlsTimeOut;
   final bool switchFullScreenOnLongPress;
   final bool hideShareButton;
+  final bool isErrorVideo;
   final String urlImageThumnail;
 
   PlayControlDelegate playCtrDelegate;
@@ -69,7 +70,7 @@ class Controls extends StatefulWidget {
     this.urlImageThumnail,
     this.playCtrDelegate,
     this.isFullScreen,
-
+    this.isErrorVideo = false
   });
 
   @override
@@ -204,7 +205,21 @@ class _ControlsState extends State<Controls> {
     return Stack(
       children: <Widget>[
         (_stateControl != StateControl.ACTIVE)
-          ? CachedNetworkImage(
+          ? widget.isErrorVideo ? 
+              Container(
+                color: Colors.black,
+                width: widget.width,
+                height: widget.height,
+                child:  Center(
+                  child: Text(
+                    "Video not support.", 
+                    style: TextStyle(
+                      color: Colors.white, 
+                      fontSize: 15
+                    ),
+                  ),
+                )
+              ) : CachedNetworkImage(
               imageUrl: widget.urlImageThumnail ??
                   "http://i3.ytimg.com/vi/D86RtevtfrA/hqdefault.jpg",
               width: widget.width,
@@ -522,13 +537,13 @@ class _ControlsState extends State<Controls> {
                   ),
             ),
           )
-        : AspectRatio(
-            aspectRatio: 16 / 9,
-            child: Center(
-              child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Colors.red)),
-            ),
-          );
-  }
+        : widget.isErrorVideo ? SizedBox() : AspectRatio(
+          aspectRatio: 16 / 9,
+          child: Center(
+            child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Colors.red)),
+          ),
+        );
+}
 
 //-----------------------Render bottom control----------------------
   Widget _buildBottomControls() {
@@ -604,10 +619,13 @@ class _ControlsState extends State<Controls> {
                   flex: 1,
                   child: InkWell(
                     onTap: ()  {
-                      if (widget.playCtrDelegate != null && mounted) {
-                        setState(() async {
-                          widget.isFullScreen = await widget.playCtrDelegate.fullscreen(widget.isFullScreen);
-                        });
+                      if (widget.playCtrDelegate != null) {
+                        if(mounted){
+                          setState(() async {
+                            widget.isFullScreen = await widget.playCtrDelegate.fullscreen(widget.isFullScreen);
+                          });
+                        }
+                        
                       }
                     },
                     child: Container(

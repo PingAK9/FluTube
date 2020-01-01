@@ -3,6 +3,7 @@ class CallBackVideoController {
   static CallBackVideoController instance;
 
   Function(VideoPlayerController videoController) callback;
+  Function(bool stateError) listenStateError;
 
   factory CallBackVideoController() {
     if (instance == null) instance = CallBackVideoController._internal();

@@ -245,7 +245,7 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
 
     if(_url == null || _url == ""){
       setState(() {
-        isErrorInit = true;
+        callBackVideoController.listenStateError(true);
         return;
       });
     }
@@ -398,41 +398,7 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.showThumb && !isPlaying && _needsShowThumb || isErrorInit) {
-      return Center(
-        child: Container(
-          width: MediaQuery.of(context).size.width,
-          child: AspectRatio(
-            aspectRatio: widget.aspectRatio,
-            child: Stack(
-              fit: StackFit.expand,
-              children: <Widget>[
-                isErrorInit ?
-                Container(
-                  color: Colors.black,
-                  child:  Center(
-                    child: Text(
-                      "Video not support.", 
-                      style: TextStyle(
-                        color: Colors.white, 
-                        fontSize: 15
-                      ),
-                    ),
-                  )
-                ):
-                CachedNetworkImage(
-                  imageUrl: widget.urlImageThumnail ?? "http://i3.ytimg.com/vi/D86RtevtfrA/hqdefault.jpg",
-                  width: widget.width,
-                  height: widget.height,
-                  fit: BoxFit.cover,
-                )
-              ],
-            ),
-          ),
-        ),
-      );
-    } else {
-      Controls _controls = Controls(
+    Controls _controls = Controls(
         urlImageThumnail: widget.urlImageThumnail,
         playCtrDelegate: widget.playCtrDelegate,
         width: widget.width,
@@ -447,6 +413,29 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
         fullScreenCallback: () async {
         },
       );
+    if (widget.showThumb && !isPlaying && _needsShowThumb || isErrorInit) {
+      return Center(
+        child: Container(
+          width: MediaQuery.of(context).size.width,
+          child: AspectRatio(
+            aspectRatio: widget.aspectRatio,
+            child: Stack(
+              fit: StackFit.expand,
+              children: <Widget>[
+                isErrorInit ? _controls :
+                CachedNetworkImage(
+                  imageUrl: widget.urlImageThumnail ?? "http://i3.ytimg.com/vi/D86RtevtfrA/hqdefault.jpg",
+                  width: widget.width,
+                  height: widget.height,
+                  fit: BoxFit.cover,
+                )
+              ],
+            ),
+          ),
+        ),
+      );
+    } else {
+      
       return Stack(
         children: <Widget>[
           chewieController != null
@@ -474,9 +463,8 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
       return result != null && result.muxed != null && result.muxed.first != null && result.muxed.first.url != null ? result.muxed.first.url : "";
 
     } catch (e) {
-      setState(() {
-        isErrorInit = true;
-      });
+      print("-------------try catch-----------------");
+      callBackVideoController.listenStateError(true);
     }
   }
 
