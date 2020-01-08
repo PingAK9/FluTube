@@ -95,6 +95,7 @@ class _ControlsState extends State<Controls> {
   bool                          _flagAddListener = false;
   bool                          _isShowSub = true;
   bool                          _isShowIconFast;
+  bool                          _isError;
  
 
 
@@ -112,6 +113,7 @@ class _ControlsState extends State<Controls> {
     _showControls                       = widget.showControls ?? true;
     _stateDoubleTap                     = StateDoubleTap.NONE;
     _isShowIconFast                     = false;
+    _isError                            = widget.isErrorVideo;
     
     _callbackController = CallBackVideoController();
     _callbackController.callback = (_controller) {
@@ -128,6 +130,11 @@ class _ControlsState extends State<Controls> {
       }
     };
     widget.controlsShowingCallback(_showControls);
+    _callbackController.listenStateError = (stateError){
+      setState(() {
+        _isError = stateError;
+      });
+    };
   }
 
   @override
@@ -205,14 +212,14 @@ class _ControlsState extends State<Controls> {
     return Stack(
       children: <Widget>[
         (_stateControl != StateControl.ACTIVE)
-          ? widget.isErrorVideo ? 
+          ? _isError ? 
               Container(
                 color: Colors.black,
                 width: widget.width,
                 height: widget.height,
                 child:  Center(
                   child: Text(
-                    "Video not support.", 
+                    "Error loading video!", 
                     style: TextStyle(
                       color: Colors.white, 
                       fontSize: 15
@@ -537,7 +544,7 @@ class _ControlsState extends State<Controls> {
                   ),
             ),
           )
-        : widget.isErrorVideo ? SizedBox() : AspectRatio(
+        : _isError ? SizedBox() : AspectRatio(
           aspectRatio: 16 / 9,
           child: Center(
             child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Colors.red)),

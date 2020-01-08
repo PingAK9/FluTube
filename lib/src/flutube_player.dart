@@ -247,7 +247,7 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
     if(_url == null || _url == ""){
       setState(() {
         isErrorInit = true;
-        callBackVideoController.listenStateError(true);
+        callBackVideoController?.listenStateError(true);
         return;
       });
     }
@@ -256,7 +256,7 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
       if(url == null){
         setState(() {
           isErrorInit = true;
-          callBackVideoController.listenStateError(true); 
+          callBackVideoController?.listenStateError(true); 
         });
         return;
       }
@@ -287,13 +287,13 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
       if (this.videoController != null &&
           this.videoController.value.initialized) {
         print("---------------------call back from init to CONTROL------------------");
-        callBackVideoController.callback(this.videoController);
+        callBackVideoController?.callback(this.videoController);
         widget.callBackController(this.videoController);
       }
     }).catchError((onError){
       setState(() {
         isErrorInit = true;
-        callBackVideoController.listenStateError(true); 
+        callBackVideoController?.listenStateError(true); 
       });
       return;
     });
@@ -322,7 +322,7 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
       this.videoController.pause();
     }
     if (this.videoController != null && this.videoController.value.initialized && mounted) {
-      callBackVideoController.callback(this.videoController);
+      callBackVideoController?.callback(this.videoController);
       widget.callBackController(this.videoController);
     }
   }
@@ -356,7 +356,7 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
           }
           
           widget.callBackController(this.videoController);
-          callBackVideoController.callback(this.videoController);
+          callBackVideoController?.callback(this.videoController);
         }
       }
     }
@@ -365,11 +365,9 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
   _errorListener() {
     if (!this.videoController.value.hasError) return;
     
-    if(countReplayWhenError == 5){
-      setState(() {
-        isErrorInit = true;
-        callBackVideoController.listenStateError(true); 
-      });
+    if(countReplayWhenError == 3){
+      isErrorInit = true;
+      callBackVideoController?.listenStateError(true); 
       return;
     }
     if (statePlaying.hashCodeWidget == widget.playCtrDelegate.hashCode && player.statePlayer == FlutubeState.ON) {
@@ -492,10 +490,8 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
     } catch (e) {
       print("-------------try catch-----------------");
       print("---- cache fe");
-      setState(() {
-        isErrorInit = true;
-        callBackVideoController.listenStateError(true); 
-      });
+      isErrorInit = true;
+      callBackVideoController?.listenStateError(true); 
       return null;
     }
   }
