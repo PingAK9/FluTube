@@ -178,6 +178,7 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
   CallBackVideoController callBackVideoController;
   StatePlaying statePlaying;
   StatePlayer player;
+  int countReplayWhenError = 0;
   var _extractor;
   get checkIsPlaying => this.videoController != null && this.videoController.value != null && this.videoController.value.isPlaying;
   @override
@@ -208,16 +209,16 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
     print("[flutube_player.dart]-------------dispose-------------");
     WidgetsBinding.instance.removeObserver(this);
     if (videoController != null && player.statePlayer == FlutubeState.OFF) {
-      this.videoController.removeListener(_playingListener);
-      this.videoController.removeListener(_errorListener);
-      this.videoController.removeListener(_endListener);
+      this.videoController?.removeListener(_playingListener);
+      this.videoController?.removeListener(_errorListener);
+      this.videoController?.removeListener(_endListener);
       this.videoController.removeListener(_startListener);
     }
     if(this.chewieController != null){
-      if(this.chewieController.videoPlayerController.value.isPlaying){
-        this.chewieController.videoPlayerController.pause();
+      if(this.chewieController?.videoPlayerController?.value?.isPlaying){
+        this.chewieController?.videoPlayerController?.pause();
       }
-      this.chewieController.dispose();
+      this.chewieController?.dispose();
     }
     super.dispose();
   }
@@ -245,12 +246,21 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
 
     if(_url == null || _url == ""){
       setState(() {
+        isErrorInit = true;
         callBackVideoController.listenStateError(true);
         return;
       });
     }
 
     _fetchVideoURL(_url, type).then((url) {
+      if(url == null){
+        setState(() {
+          isErrorInit = true;
+          callBackVideoController.listenStateError(true); 
+        });
+        return;
+      }
+
       this.videoController = VideoPlayerController.network(url)
         ..addListener(_playingListener)
         ..addListener(_errorListener)
@@ -280,6 +290,12 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
         callBackVideoController.callback(this.videoController);
         widget.callBackController(this.videoController);
       }
+    }).catchError((onError){
+      setState(() {
+        isErrorInit = true;
+        callBackVideoController.listenStateError(true); 
+      });
+      return;
     });
   }
 
@@ -348,16 +364,27 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
 
   _errorListener() {
     if (!this.videoController.value.hasError) return;
+    
+    if(countReplayWhenError == 5){
+      setState(() {
+        isErrorInit = true;
+        callBackVideoController.listenStateError(true); 
+      });
+      return;
+    }
     if (statePlaying.hashCodeWidget == widget.playCtrDelegate.hashCode && player.statePlayer == FlutubeState.ON) {
       if (videoController.value.errorDescription.contains("code: 403")){
+        countReplayWhenError++;
         _initialize(widget._videourls as String, widget.typeVideo);
       }else{
         this.videoController?.pause();
         this.videoController = null;
         chewieController = null;
+        countReplayWhenError++;
         _initialize(widget._videourls as String, widget.typeVideo);
       }
     }
+    Timer(Duration(seconds: 2),(){});
   }
 
   _playlistLoadNext() {
@@ -464,7 +491,12 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
 
     } catch (e) {
       print("-------------try catch-----------------");
-      callBackVideoController.listenStateError(true);
+      print("---- cache fe");
+      setState(() {
+        isErrorInit = true;
+        callBackVideoController.listenStateError(true); 
+      });
+      return null;
     }
   }
 
