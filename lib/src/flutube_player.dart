@@ -361,9 +361,9 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
       }
     }
   }
-
+  bool pending = false;
   _errorListener() {
-    if (!this.videoController.value.hasError) return;
+    if (!this.videoController.value.hasError || pending == true) return;
     
     if(countReplayWhenError == 3){
       isErrorInit = true;
@@ -371,18 +371,27 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
       return;
     }
     if (statePlaying.hashCodeWidget == widget.playCtrDelegate.hashCode && player.statePlayer == FlutubeState.ON) {
+      pending = true;
       if (videoController.value.errorDescription.contains("code: 403")){
         countReplayWhenError++;
-        _initialize(widget._videourls as String, widget.typeVideo);
+        Timer(Duration(seconds: 2),(){
+          _initialize(widget._videourls as String, widget.typeVideo);
+          pending = false;
+        });
+
+        
       }else{
         this.videoController?.pause();
         this.videoController = null;
         chewieController = null;
         countReplayWhenError++;
-        _initialize(widget._videourls as String, widget.typeVideo);
+        Timer(Duration(seconds: 2),(){
+          _initialize(widget._videourls as String, widget.typeVideo);
+          pending = false;
+        });
+        
       }
     }
-    Timer(Duration(seconds: 2),(){});
   }
 
   _playlistLoadNext() {
