@@ -12,7 +12,9 @@ dependencies:
   youtube_extractor: ^1.0.4
   cached_network_image: ^2.0.0-rc
   chewie:
-    git: https://github.com/puzuka/chewie
+    git: 
+      url: https://github.com/puzuka/chewie.git
+      ref: 7eb0f7effebd6217717e627a1cf61f29579f9d8a
   flutter:
     sdk: flutter
 
