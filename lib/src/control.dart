@@ -14,6 +14,8 @@ const String ICON_PLAY_DETAIL = "assets/images/icons/ic_play_detail.png";
 const String ICON_PAUSE = "assets/images/icons/ic_pause.png";
 const String ICON_NEXT = "assets/images/icons/ic_next.png";
 const String ICON_PRE = "assets/images/icons/ic_pre.png";
+// TODO: update default thumbnail
+const String DEFAULT_THUMBNAIL = "http://i3.ytimg.com/vi/D86RtevtfrA/hqdefault.jpg";
 
 class ControlsColor {
   final Color timerColor;
