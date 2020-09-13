@@ -1,3 +1,5 @@
+import 'dart:async';
+
 abstract class PlayControlDelegate {
   void nextVideo ();
   void previousVideo ();
@@ -6,5 +8,5 @@ abstract class PlayControlDelegate {
   bool subvideo (bool isShowSub);
   void backButton ();
   Function() replay;
-  // void 
+  bool showControl (bool isShow);
 }

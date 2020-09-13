@@ -9,7 +9,6 @@ enum StateControl { INIT, ACTIVE, DONE }
 enum StateActionPlayer { FAST_FORWARD, FAST_REWIND }
 enum StateDoubleTap { LEFT, RIGHT, NONE }
 typedef YoutubeQualityChangeCallback(String quality, Duration position);
-typedef ControlsShowingCallback(bool showing);
 const String ICON_PLAY_DETAIL = "assets/images/icons/ic_play_detail.png";
 const String ICON_PAUSE = "assets/images/icons/ic_pause.png";
 const String ICON_NEXT = "assets/images/icons/ic_next.png";
@@ -45,8 +44,6 @@ class Controls extends StatefulWidget {
   final double height;
   final String defaultQuality;
   final bool defaultCall;
-  final VoidCallback fullScreenCallback;
-  final ControlsShowingCallback controlsShowingCallback;
   final bool controlsActiveBackgroundOverlay;
   final Duration controlsTimeOut;
   final bool switchFullScreenOnLongPress;
@@ -63,9 +60,7 @@ class Controls extends StatefulWidget {
     this.height, 
     this.defaultQuality = "720p", 
     this.defaultCall, 
-    this.fullScreenCallback, 
-    this.controlsShowingCallback, 
-    this.controlsActiveBackgroundOverlay, 
+    this.controlsActiveBackgroundOverlay,
     this.controlsTimeOut, 
     this.switchFullScreenOnLongPress, 
     this.hideShareButton, 
@@ -131,7 +126,7 @@ class _ControlsState extends State<Controls> {
         });
       }
     };
-    widget.controlsShowingCallback(_showControls);
+    widget.playCtrDelegate.showControl(_showControls);
     _callbackController.listenStateError = (stateError){
       setState(() {
         _isError = stateError;
@@ -766,11 +761,11 @@ Widget _renderAreaOfActionDoubleTap(){
       if (_timer != null) _timer.cancel();
       _showControls = isShowControl;
       refeshWidget();
-      widget.controlsShowingCallback(_showControls);
+      widget.playCtrDelegate.showControl(_showControls);
       if (_showControls) {
         _timer = Timer(widget.controlsTimeOut, () {
           _showControls = false;
-          widget.controlsShowingCallback(_showControls);
+          widget.playCtrDelegate.showControl(_showControls);
           refeshWidget();
         });
       }

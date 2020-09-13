@@ -125,7 +125,7 @@ class FluTube extends StatefulWidget {
     this._idVideo = videourl;
   }
 
-  FluTube.playlist(@required List<String> playlist,
+  FluTube.playlist(List<String> playlist,
       {Key key,
       this.aspectRatio,
       this.autoInitialize = false,
@@ -468,8 +468,6 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
               controlsActiveBackgroundOverlay: false,
               controlsTimeOut: const Duration(seconds: 2),
               switchFullScreenOnLongPress: false,
-              controlsShowingCallback: (showing) {},
-              fullScreenCallback: () async {},
             );
     if (widget.showThumb && !isPlaying && _needsShowThumb || isErrorInit) {
       return Center(
