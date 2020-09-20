@@ -1,13 +1,11 @@
 import 'dart:async';
 
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter/material.dart';
 import 'package:chewie/chewie.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutube/src/play_control_delegate.dart';
 import 'package:video_player/video_player.dart';
-import 'package:youtube_extractor/youtube_extractor.dart';
-
+import 'package:http/http.dart' as http;
 import 'callback_control.dart';
 import 'control.dart';
 
@@ -170,10 +168,8 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
   int _currentlyPlaying = 0; // Track position of currently playing video
   double widthCurrent;
   double heightCurrent;
-  String _lastUrl;
 
   bool get _isPlaylist => widget._videourls is List<String>;
-  bool _isFullScreen = false;
   Controls controls;
 
   bool get showControls => widget.showControls ?? true;
@@ -181,7 +177,6 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
   StatePlaying statePlaying;
   StatePlayer player;
   int countReplayWhenError = 0;
-  var _extractor;
 
   get checkIsPlaying =>
       this.videoController != null &&
@@ -196,7 +191,6 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
         disposeController();
       }
     } catch (e) {}
-    _extractor = _extractor ?? YouTubeExtractor();
     callBackVideoController = CallBackVideoController();
     statePlaying = StatePlaying();
     player = StatePlayer();
@@ -223,7 +217,7 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
       this.videoController.removeListener(_startListener);
     }
     if (this.chewieController != null) {
-      if (this.chewieController?.videoPlayerController?.value?.isPlaying) {
+      if (this.chewieController?.videoPlayerController?.value?.isPlaying ?? false) {
         this.chewieController?.videoPlayerController?.pause();
       }
       this.chewieController?.dispose();
@@ -480,8 +474,8 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
               children: <Widget>[
                 isErrorInit
                     ? _controls
-                    : CachedNetworkImage(
-                        imageUrl: widget.urlImageThumnail ?? DEFAULT_THUMBNAIL,
+                    : Image.network(
+                        widget.urlImageThumnail ?? DEFAULT_THUMBNAIL,
                         width: widget.width,
                         height: widget.height,
                         fit: BoxFit.cover,
@@ -506,26 +500,17 @@ class FluTubeState extends State<FluTube> with WidgetsBindingObserver {
   Future<String> _fetchVideoURL(String yt, String type) async {
     if (type.toUpperCase() == "MP4") return yt;
 
-    print(
-        "------>>>> _extractor Start: [${DateTime.now().toString()}] <<<<------");
-    try {
-      var result = await _extractor.getMediaStreamsAsync(yt);
-
-      print(
-          "------>>>> _extractor End: [${DateTime.now().toString()}] <<<<------");
-      return result != null &&
-              result.muxed != null &&
-              result.muxed.first != null &&
-              result.muxed.first.url != null
-          ? result.muxed.first.url
-          : "";
-    } catch (e) {
-      print("-------------try catch-----------------");
-      print("---- cache fe");
-      isErrorInit = true;
-      callBackVideoController?.listenStateError(true);
-      return null;
-    }
+    final response = await http.get(yt);
+    Iterable parseAll = _allStringMatches(
+        response.body, RegExp("\"url_encoded_fmt_stream_map\":\"([^\"]*)\""));
+    final Iterable<String> parse =
+        _allStringMatches(parseAll.toList()[0], RegExp("url=(.*)"));
+    final List<String> urls = parse.toList()[0].split('url=');
+    parseAll = _allStringMatches(urls[1], RegExp("([^&,]*)[&,]"));
+    String finalUrl = Uri.decodeFull(parseAll.toList()[0]);
+    if (finalUrl.indexOf('\\u00') > -1)
+      finalUrl = finalUrl.substring(0, finalUrl.indexOf('\\u00'));
+    return finalUrl;
   }
 
   Iterable<String> _allStringMatches(String text, RegExp regExp) =>

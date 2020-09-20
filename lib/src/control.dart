@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutube/flutube.dart';
 import 'package:flutube/src/callback_control.dart';
@@ -8,13 +7,16 @@ import 'package:video_player/video_player.dart';
 enum StateControl { INIT, ACTIVE, DONE }
 enum StateActionPlayer { FAST_FORWARD, FAST_REWIND }
 enum StateDoubleTap { LEFT, RIGHT, NONE }
+
 typedef YoutubeQualityChangeCallback(String quality, Duration position);
+
 const String ICON_PLAY_DETAIL = "assets/images/icons/ic_play_detail.png";
 const String ICON_PAUSE = "assets/images/icons/ic_pause.png";
 const String ICON_NEXT = "assets/images/icons/ic_next.png";
 const String ICON_PRE = "assets/images/icons/ic_pre.png";
 // TODO: update default thumbnail
-const String DEFAULT_THUMBNAIL = "http://i3.ytimg.com/vi/D86RtevtfrA/hqdefault.jpg";
+const String DEFAULT_THUMBNAIL =
+    "http://i3.ytimg.com/vi/D86RtevtfrA/hqdefault.jpg";
 
 class ControlsColor {
   final Color timerColor;
@@ -54,21 +56,20 @@ class Controls extends StatefulWidget {
   PlayControlDelegate playCtrDelegate;
   bool isFullScreen;
 
-  Controls({
-    this.showControls, 
-    this.width, 
-    this.height, 
-    this.defaultQuality = "720p", 
-    this.defaultCall, 
-    this.controlsActiveBackgroundOverlay,
-    this.controlsTimeOut, 
-    this.switchFullScreenOnLongPress, 
-    this.hideShareButton, 
-    this.urlImageThumnail,
-    this.playCtrDelegate,
-    this.isFullScreen,
-    this.isErrorVideo = false
-  });
+  Controls(
+      {this.showControls,
+      this.width,
+      this.height,
+      this.defaultQuality = "720p",
+      this.defaultCall,
+      this.controlsActiveBackgroundOverlay,
+      this.controlsTimeOut,
+      this.switchFullScreenOnLongPress,
+      this.hideShareButton,
+      this.urlImageThumnail,
+      this.playCtrDelegate,
+      this.isFullScreen,
+      this.isErrorVideo = false});
 
   @override
   _ControlsState createState() => _ControlsState();
@@ -78,23 +79,21 @@ class _ControlsState extends State<Controls> {
   //---------------------------------------------------------
   //-----------------------Variable--------------------------
   //---------------------------------------------------------
-  bool                          _showControls;
-  StateDoubleTap                _stateDoubleTap;
-  Timer                         _timer;
-  Timer                         _timerDoubleTap;
-  CallBackVideoController       _callbackController;
-  VideoPlayerController         _videoController;
-  EventControl                  _eventControl;
-  StateControl                  _stateControl;
-  double                        _currentPosition = 0;
-  String                        _currentPositionString = "00:00";
-  String                        _remainingString = "00:00";
-  bool                          _flagAddListener = false;
-  bool                          _isShowSub = true;
-  bool                          _isShowIconFast;
-  bool                          _isError;
- 
-
+  bool _showControls;
+  StateDoubleTap _stateDoubleTap;
+  Timer _timer;
+  Timer _timerDoubleTap;
+  CallBackVideoController _callbackController;
+  VideoPlayerController _videoController;
+  EventControl _eventControl;
+  StateControl _stateControl;
+  double _currentPosition = 0;
+  String _currentPositionString = "00:00";
+  String _remainingString = "00:00";
+  bool _flagAddListener = false;
+  bool _isShowSub = true;
+  bool _isShowIconFast;
+  bool _isError;
 
   //---------------------------------------------------------
   //-----------------------Function of root------------------
@@ -104,14 +103,14 @@ class _ControlsState extends State<Controls> {
   void initState() {
     super.initState();
     print("[control.dart][initState] init");
-    _stateControl                       = StateControl.INIT;
-    _eventControl                       = EventControl();
-    _eventControl.play                  = playVideo;
-    _showControls                       = widget.showControls ?? true;
-    _stateDoubleTap                     = StateDoubleTap.NONE;
-    _isShowIconFast                     = false;
-    _isError                            = widget.isErrorVideo;
-    
+    _stateControl = StateControl.INIT;
+    _eventControl = EventControl();
+    _eventControl.play = playVideo;
+    _showControls = widget.showControls ?? true;
+    _stateDoubleTap = StateDoubleTap.NONE;
+    _isShowIconFast = false;
+    _isError = widget.isErrorVideo;
+
     _callbackController = CallBackVideoController();
     _callbackController.callback = (_controller) {
       if (_controller != null && _controller.value.initialized && mounted) {
@@ -127,7 +126,7 @@ class _ControlsState extends State<Controls> {
       }
     };
     widget.playCtrDelegate.showControl(_showControls);
-    _callbackController.listenStateError = (stateError){
+    _callbackController.listenStateError = (stateError) {
       setState(() {
         _isError = stateError;
       });
@@ -141,7 +140,7 @@ class _ControlsState extends State<Controls> {
       _videoController.removeListener(listenerControls);
       _videoController = null;
     }
-    if(StatePlayer.instance.stateScreen == FlutubeStateScreen.SPECIAL) {
+    if (StatePlayer.instance.stateScreen == FlutubeStateScreen.SPECIAL) {
       StatePlayer.instance.statePlayer = FlutubeState.OFF;
     }
     super.deactivate();
@@ -173,12 +172,13 @@ class _ControlsState extends State<Controls> {
 
   listenerControls() async {
     if (_videoController != null && _videoController.value.initialized) {
-      if (_videoController.value.position != null && _videoController.value.duration != null) {
+      if (_videoController.value.position != null &&
+          _videoController.value.duration != null) {
         if (_videoController.value.isPlaying) {
           updateTimePostion();
         }
-      }else{
-        _stateControl = StateControl.DONE; 
+      } else {
+        _stateControl = StateControl.DONE;
       }
     } else {
       _stateControl = StateControl.INIT;
@@ -187,19 +187,22 @@ class _ControlsState extends State<Controls> {
 
   updateTimePostion() {
     setState(() {
-      if ((_videoController.value.duration.inMilliseconds - 600) <= _videoController.value.position.inMilliseconds) {
+      if ((_videoController.value.duration.inMilliseconds - 600) <=
+          _videoController.value.position.inMilliseconds) {
         _videoController.pause();
         _showControls = true;
         _stateControl = StateControl.DONE;
       }
 
-      _currentPosition        = (_videoController.value.position.inSeconds ?? 0) / _videoController.value.duration.inSeconds;
-      _currentPositionString  = formatDuration(_videoController.value.position);
-      _remainingString        = formatDuration(_videoController.value.duration - _videoController.value.position);
+      _currentPosition = (_videoController.value.position.inSeconds ?? 0) /
+          _videoController.value.duration.inSeconds;
+      _currentPositionString = formatDuration(_videoController.value.position);
+      _remainingString = formatDuration(
+          _videoController.value.duration - _videoController.value.position);
     });
   }
-  
-  //--------------------------------------------------------- 
+
+  //---------------------------------------------------------
   //-----------------------Function Render ------------------
   //---------------------------------------------------------
 
@@ -209,122 +212,122 @@ class _ControlsState extends State<Controls> {
     return Stack(
       children: <Widget>[
         (_stateControl != StateControl.ACTIVE)
-          ? _isError ? 
-              Container(
-                color: Colors.black,
-                width: widget.width,
-                height: widget.height,
-                child:  Center(
-                  child: Text(
-                    "Error loading video!", 
-                    style: TextStyle(
-                      color: Colors.white, 
-                      fontSize: 15
-                    ),
-                  ),
-                )
-              ) : CachedNetworkImage(
-              imageUrl: widget.urlImageThumnail ??
-                  "http://i3.ytimg.com/vi/D86RtevtfrA/hqdefault.jpg",
-              width: widget.width,
-              height: widget.height,
-              fit: BoxFit.cover,
-            )
-          : SizedBox(),
+            ? _isError
+                ? Container(
+                    color: Colors.black,
+                    width: widget.width,
+                    height: widget.height,
+                    child: Center(
+                      child: Text(
+                        "Error loading video!",
+                        style: TextStyle(color: Colors.white, fontSize: 15),
+                      ),
+                    ))
+                : Image.network(
+                    widget.urlImageThumnail ?? DEFAULT_THUMBNAIL,
+                    width: widget.width,
+                    height: widget.height,
+                    fit: BoxFit.cover,
+                  )
+            : SizedBox(),
         _renderAreaOfActionDoubleTap(),
         GestureDetector(
           onTap: () {
             tapLayout();
           },
           child: AnimatedOpacity(
-            opacity: (_showControls || _stateControl != StateControl.ACTIVE) ? 1.0 : 0.0,
+            opacity: (_showControls || _stateControl != StateControl.ACTIVE)
+                ? 1.0
+                : 0.0,
             duration: Duration(milliseconds: 300),
             child: Material(
               color: Color(0x88000000),
               child: Stack(
                 children: <Widget>[
                   (_showControls || _stateControl != StateControl.ACTIVE)
-                 ? Stack(
-                    children: <Widget>[
-                      Container(
-                        width: widget.width,
-                        height: widget.height,
-                        child: Center(
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: <Widget>[
-                              Expanded(
-                                child: _fastRewind(),
-                                flex: 4,
+                      ? Stack(
+                          children: <Widget>[
+                            Container(
+                              width: widget.width,
+                              height: widget.height,
+                              child: Center(
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: <Widget>[
+                                    Expanded(
+                                      child: _fastRewind(),
+                                      flex: 4,
+                                    ),
+                                    Expanded(
+                                      child: _playButton(),
+                                      flex: 2,
+                                    ),
+                                    Expanded(
+                                      child: _fastForward(),
+                                      flex: 4,
+                                    )
+                                  ],
+                                ),
                               ),
-                              Expanded(
-                                child: _playButton(),
-                                flex: 2,
-                              ),
-                              Expanded(
-                                child: _fastForward(),
-                                flex: 4,
-                              )
-                            ],
+                            ),
+                            _buildBottomControls(),
+                            Positioned(
+                              child: _buildAppBar(context),
+                              top: 0,
+                            )
+                          ],
+                        )
+                      : Container(
+                          width: widget.width,
+                          height: widget.height,
+                          child: Center(
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: <Widget>[
+                                Expanded(
+                                  child: InkWell(
+                                    onTap: () {
+                                      tapLayout();
+                                    },
+                                    onDoubleTap: () {
+                                      actionFastForwardAndRewind(
+                                        stateActionPlayer:
+                                            StateActionPlayer.FAST_REWIND,
+                                        isStateDoubleTap: StateDoubleTap.LEFT,
+                                        isShowIconFast: true,
+                                      );
+                                    },
+                                    child: Container(
+                                      color: Colors.transparent,
+                                    ),
+                                  ),
+                                  flex: 1,
+                                ),
+                                Expanded(
+                                  child: InkWell(
+                                    onTap: () {
+                                      tapLayout();
+                                    },
+                                    onDoubleTap: () {
+                                      actionFastForwardAndRewind(
+                                          stateActionPlayer:
+                                              StateActionPlayer.FAST_FORWARD,
+                                          isStateDoubleTap:
+                                              StateDoubleTap.RIGHT,
+                                          isShowIconFast: true);
+                                    },
+                                    child: Container(
+                                      color: Colors.transparent,
+                                    ),
+                                  ),
+                                  flex: 1,
+                                )
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                      _buildBottomControls(),
-                      Positioned(
-                        child: _buildAppBar(context),
-                        top: 0,
-                      )
-                    ],
-                  ) : 
-                  Container(
-                    width: widget.width,
-                    height: widget.height,
-                    child: Center(
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: <Widget>[
-                          Expanded(
-                            child: InkWell(
-                              onTap: () {
-                                tapLayout();
-                              },
-                              onDoubleTap: (){
-                                actionFastForwardAndRewind(
-                                  stateActionPlayer: StateActionPlayer.FAST_REWIND,
-                                  isStateDoubleTap: StateDoubleTap.LEFT,
-                                  isShowIconFast: true,
-                                );
-                              },
-                              child: Container(
-                                color: Colors.transparent,
-                              ),
-                            ),
-                            flex: 1,
-                          ),
-                          Expanded(
-                            child: InkWell(
-                              onTap: () {
-                                tapLayout();
-                              },
-                              onDoubleTap: (){
-                                actionFastForwardAndRewind(
-                                  stateActionPlayer: StateActionPlayer.FAST_FORWARD,
-                                  isStateDoubleTap: StateDoubleTap.RIGHT,
-                                  isShowIconFast: true
-                                );
-                              },
-                              child: Container(
-                                color: Colors.transparent,
-                              ),
-                            ),
-                            flex: 1,
-                          )
-                        ],
-                      ),
-                    ),
-                  ),
                 ],
               ),
             ),
@@ -334,7 +337,7 @@ class _ControlsState extends State<Controls> {
     );
   }
 
- //-----------------------Render button Subtitle----------------------
+  //-----------------------Render button Subtitle----------------------
   Widget _buildButtonSubtitles() {
     return Align(
       alignment: Alignment.topRight,
@@ -342,7 +345,9 @@ class _ControlsState extends State<Controls> {
         padding: EdgeInsets.only(right: (widget.isFullScreen ? 30 : 10.0)),
         child: GestureDetector(
           onTap: () {
-            if (_stateControl != StateControl.INIT && widget.playCtrDelegate != null && mounted) {
+            if (_stateControl != StateControl.INIT &&
+                widget.playCtrDelegate != null &&
+                mounted) {
               setState(() {
                 _isShowSub = widget.playCtrDelegate.subvideo(_isShowSub);
               });
@@ -407,19 +412,17 @@ class _ControlsState extends State<Controls> {
     return Stack(
       children: <Widget>[
         GestureDetector(
-          onTap: () {
-            onTapAction(isShowControl: false);
-          },
-          onDoubleTap: (){
-            actionFastForwardAndRewind(
-              stateActionPlayer: StateActionPlayer.FAST_FORWARD,
-              isStateDoubleTap: StateDoubleTap.RIGHT
-            );
-          },
-          child: Container(
-            color: Colors.transparent,
-          )
-        ),
+            onTap: () {
+              onTapAction(isShowControl: false);
+            },
+            onDoubleTap: () {
+              actionFastForwardAndRewind(
+                  stateActionPlayer: StateActionPlayer.FAST_FORWARD,
+                  isStateDoubleTap: StateDoubleTap.RIGHT);
+            },
+            child: Container(
+              color: Colors.transparent,
+            )),
         (_stateControl != StateControl.INIT)
             ? Center(
                 child: GestureDetector(
@@ -454,19 +457,17 @@ class _ControlsState extends State<Controls> {
     return Stack(
       children: <Widget>[
         GestureDetector(
-          onTap: () {
-            onTapAction(isShowControl: false);
-          },
-          onDoubleTap: (){
-            actionFastForwardAndRewind(
-              stateActionPlayer: StateActionPlayer.FAST_REWIND,
-              isStateDoubleTap: StateDoubleTap.LEFT
-            );
-          },
-          child: Container(
-            color: Colors.transparent,
-          )
-        ),
+            onTap: () {
+              onTapAction(isShowControl: false);
+            },
+            onDoubleTap: () {
+              actionFastForwardAndRewind(
+                  stateActionPlayer: StateActionPlayer.FAST_REWIND,
+                  isStateDoubleTap: StateDoubleTap.LEFT);
+            },
+            child: Container(
+              color: Colors.transparent,
+            )),
         (_stateControl != StateControl.INIT)
             ? Center(
                 child: GestureDetector(
@@ -476,11 +477,11 @@ class _ControlsState extends State<Controls> {
                     }
                   },
                   child: Image.asset(
-                      ICON_PRE,
-                      fit: BoxFit.contain,
-                      height: 30,
-                      width: 30,
-                      color: Colors.white,
+                    ICON_PRE,
+                    fit: BoxFit.contain,
+                    height: 30,
+                    width: 30,
+                    color: Colors.white,
                   ),
                 ),
               )
@@ -496,58 +497,60 @@ class _ControlsState extends State<Controls> {
             borderRadius: BorderRadius.circular(100.0),
             color: Colors.transparent,
             child: GestureDetector(
-                onTap: () {
-                  if (_stateControl != StateControl.INIT) {
-                    if (widget.playCtrDelegate != null) {
-                      if (_stateControl == StateControl.ACTIVE) {
-                        bool oldStateLive = _videoController.value.isPlaying;
-                        bool newStateLive = widget.playCtrDelegate
-                            .playVideo(_videoController.value.isPlaying);
-                        if (oldStateLive == newStateLive) {
-                          playVideo();
-                        } 
-                      } else {
-                        widget.playCtrDelegate.replay();
-                        _stateControl = StateControl.INIT;
-                        _flagAddListener = false;
+              onTap: () {
+                if (_stateControl != StateControl.INIT) {
+                  if (widget.playCtrDelegate != null) {
+                    if (_stateControl == StateControl.ACTIVE) {
+                      bool oldStateLive = _videoController.value.isPlaying;
+                      bool newStateLive = widget.playCtrDelegate
+                          .playVideo(_videoController.value.isPlaying);
+                      if (oldStateLive == newStateLive) {
+                        playVideo();
                       }
+                    } else {
+                      widget.playCtrDelegate.replay();
+                      _stateControl = StateControl.INIT;
+                      _flagAddListener = false;
                     }
                   }
-                  onTapAction();
-                },
-                child: (_stateControl == StateControl.DONE)
-                ? Icon(
-                    Icons.replay,
-                    size: 29,
-                    color: Colors.white,
-                  )
-                : ((_videoController != null &&
-                        _videoController.value.initialized &&
-                        _videoController.value.isPlaying)
-                    ? Image.asset(
-                        ICON_PAUSE,
-                        fit: BoxFit.contain,
-                        height: 29,
-                        width: 29,
-                        color: Colors.white,
+                }
+                onTapAction();
+              },
+              child: (_stateControl == StateControl.DONE)
+                  ? Icon(
+                      Icons.replay,
+                      size: 29,
+                      color: Colors.white,
                     )
-                    : Image.asset(
-                        ICON_PLAY_DETAIL,
-                        fit: BoxFit.contain,
-                        height: 29,
-                        width: 29,
-                        color: Colors.white,
-                    )
-                  ),
+                  : ((_videoController != null &&
+                          _videoController.value.initialized &&
+                          _videoController.value.isPlaying)
+                      ? Image.asset(
+                          ICON_PAUSE,
+                          fit: BoxFit.contain,
+                          height: 29,
+                          width: 29,
+                          color: Colors.white,
+                        )
+                      : Image.asset(
+                          ICON_PLAY_DETAIL,
+                          fit: BoxFit.contain,
+                          height: 29,
+                          width: 29,
+                          color: Colors.white,
+                        )),
             ),
           )
-        : _isError ? SizedBox() : AspectRatio(
-          aspectRatio: 16 / 9,
-          child: Center(
-            child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Colors.red)),
-          ),
-        );
-}
+        : _isError
+            ? SizedBox()
+            : AspectRatio(
+                aspectRatio: 16 / 9,
+                child: Center(
+                  child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.red)),
+                ),
+              );
+  }
 
 //-----------------------Render bottom control----------------------
   Widget _buildBottomControls() {
@@ -556,7 +559,8 @@ class _ControlsState extends State<Controls> {
       left: 0.0,
       child: Center(
         child: Container(
-          margin: EdgeInsets.only(left: 20, right: widget.isFullScreen ? 50 : 20),
+          margin:
+              EdgeInsets.only(left: 20, right: widget.isFullScreen ? 50 : 20),
           width: widget.width - 20,
           child: Padding(
             padding: EdgeInsets.only(bottom: 10.0),
@@ -584,17 +588,28 @@ class _ControlsState extends State<Controls> {
                       inactiveColor: Colors.grey,
                       value: _currentPosition,
                       onChanged: (position) {
-                        if (_videoController != null && _stateControl != StateControl.INIT) {
-                          if ((_videoController.value.duration.inMilliseconds - 700) <= (position * _videoController.value.duration.inSeconds).floor() * 1000) {
+                        if (_videoController != null &&
+                            _stateControl != StateControl.INIT) {
+                          if ((_videoController.value.duration.inMilliseconds -
+                                  700) <=
+                              (position *
+                                          _videoController
+                                              .value.duration.inSeconds)
+                                      .floor() *
+                                  1000) {
                             _handleDone();
                           } else {
                             onTapAction();
-                            _videoController.seekTo(Duration(seconds: (position * _videoController.value.duration.inSeconds).floor()));
-                            
+                            _videoController.seekTo(Duration(
+                                seconds: (position *
+                                        _videoController
+                                            .value.duration.inSeconds)
+                                    .floor()));
+
                             if (!_videoController.value.isPlaying) {
                               _videoController.play();
                             }
-                            
+
                             if (mounted) {
                               setState(() {
                                 _stateControl = StateControl.ACTIVE;
@@ -622,14 +637,14 @@ class _ControlsState extends State<Controls> {
                 Expanded(
                   flex: 1,
                   child: InkWell(
-                    onTap: ()  {
+                    onTap: () {
                       if (widget.playCtrDelegate != null) {
-                        if(mounted){
+                        if (mounted) {
                           setState(() async {
-                            widget.isFullScreen = await widget.playCtrDelegate.fullscreen(widget.isFullScreen);
+                            widget.isFullScreen = await widget.playCtrDelegate
+                                .fullscreen(widget.isFullScreen);
                           });
                         }
-                        
                       }
                     },
                     child: Container(
@@ -657,18 +672,18 @@ class _ControlsState extends State<Controls> {
   }
 
 //-----------------------Render area fastforward and fastrewind-------------------------
-Widget _renderAreaOfActionDoubleTap(){
-  return Container(
-    width: widget.width,
-    height: widget.height,
-    child: Center(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: <Widget>[
-          Expanded(
-            child: AnimatedOpacity(
-              opacity: (_stateDoubleTap == StateDoubleTap.LEFT) ? 1.0 : 0.0,
+  Widget _renderAreaOfActionDoubleTap() {
+    return Container(
+      width: widget.width,
+      height: widget.height,
+      child: Center(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Expanded(
+              child: AnimatedOpacity(
+                opacity: (_stateDoubleTap == StateDoubleTap.LEFT) ? 1.0 : 0.0,
                 duration: Duration(milliseconds: 300),
                 child: Container(
                   decoration: BoxDecoration(
@@ -684,75 +699,71 @@ Widget _renderAreaOfActionDoubleTap(){
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: <Widget>[
                         Center(
-                          child: Icon(
-                            Icons.fast_rewind, 
-                            color: _isShowIconFast ? Colors.white60 : Colors.transparent,
-                            size: 40.0
-                          ),
+                          child: Icon(Icons.fast_rewind,
+                              color: _isShowIconFast
+                                  ? Colors.white60
+                                  : Colors.transparent,
+                              size: 40.0),
                         ),
                         Text(
                           "5 seconds",
-                          style: TextStyle(
-                            color : Colors.white,
-                            fontSize: 10
-                          ),
+                          style: TextStyle(color: Colors.white, fontSize: 10),
                         )
                       ],
                     ),
                   ),
                 ),
               ),
-            flex: 4,
-          ),
-          Expanded(
-            child: Container(color: Colors.transparent,),
-            flex: 2,
-          ),
-          Expanded(
-            child: AnimatedOpacity(
-              opacity: (_stateDoubleTap == StateDoubleTap.RIGHT) ? 1.0 : 0.0,
-              duration: Duration(milliseconds: 300),
+              flex: 4,
+            ),
+            Expanded(
               child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.elliptical(40, 120),
-                    bottomLeft: Radius.elliptical(40, 100),
+                color: Colors.transparent,
+              ),
+              flex: 2,
+            ),
+            Expanded(
+              child: AnimatedOpacity(
+                opacity: (_stateDoubleTap == StateDoubleTap.RIGHT) ? 1.0 : 0.0,
+                duration: Duration(milliseconds: 300),
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.elliptical(40, 120),
+                      bottomLeft: Radius.elliptical(40, 100),
+                    ),
+                    color: Colors.white30,
                   ),
-                  color: Colors.white30,
-                ),
-                child: Align(
+                  child: Align(
                     alignment: Alignment.center,
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: <Widget>[
                         Center(
-                          child: Icon(
-                            Icons.fast_forward, 
-                            color: _isShowIconFast ? Colors.white60 : Colors.transparent,
-                            size: 40.0
-                          ),
+                          child: Icon(Icons.fast_forward,
+                              color: _isShowIconFast
+                                  ? Colors.white60
+                                  : Colors.transparent,
+                              size: 40.0),
                         ),
                         Text(
                           "5 seconds",
-                          style: TextStyle(
-                            color : Colors.white,
-                            fontSize: 10
-                          ),
+                          style: TextStyle(color: Colors.white, fontSize: 10),
                         )
                       ],
                     ),
                   ),
+                ),
               ),
-            ),
-            flex: 4,
-          )
-        ],
+              flex: 4,
+            )
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
- //---------------------------------------------------------
+  //---------------------------------------------------------
   //-----------------------Function Handle------------------
   //---------------------------------------------------------
 
@@ -774,26 +785,32 @@ Widget _renderAreaOfActionDoubleTap(){
 
   tapLayout() {
     onTapAction();
-    if (_stateControl == StateControl.ACTIVE && !_videoController.value.isPlaying) {
+    if (_stateControl == StateControl.ACTIVE &&
+        !_videoController.value.isPlaying) {
       _videoController.play();
     }
   }
 
-  actionFastForwardAndRewind({StateActionPlayer stateActionPlayer, StateDoubleTap isStateDoubleTap,isShowIconFast = false}) async {
-    _isShowIconFast = isShowIconFast;    
+  actionFastForwardAndRewind(
+      {StateActionPlayer stateActionPlayer,
+      StateDoubleTap isStateDoubleTap,
+      isShowIconFast = false}) async {
+    _isShowIconFast = isShowIconFast;
     onDoubleTap(isStateDoubleTap);
-    
+
     if (mounted) {
       if (_videoController != null && _stateControl != StateControl.INIT) {
-        int handle = (stateActionPlayer == StateActionPlayer.FAST_FORWARD) ? 5 : (-5);
+        int handle =
+            (stateActionPlayer == StateActionPlayer.FAST_FORWARD) ? 5 : (-5);
         int _seconds = _videoController.value.position.inSeconds + handle;
 
-        if ((_videoController.value.duration.inMilliseconds - 700) <= (_seconds * 1000)) {
+        if ((_videoController.value.duration.inMilliseconds - 700) <=
+            (_seconds * 1000)) {
           _handleDone();
-        }else{
+        } else {
           _stateControl = StateControl.ACTIVE;
           await _videoController.seekTo(Duration(seconds: _seconds));
-          if(!_videoController.value.isPlaying){
+          if (!_videoController.value.isPlaying) {
             _videoController.play();
           }
           updateTimePostion();
@@ -802,20 +819,21 @@ Widget _renderAreaOfActionDoubleTap(){
       }
     }
   }
-  
-  _handleDone(){
+
+  _handleDone() {
     _videoController.pause();
     setState(() {
       StatePlayer.instance.stateScreen = FlutubeStateScreen.SPECIAL;
       _stateControl = StateControl.DONE;
       _remainingString = "00:00";
       _currentPositionString = formatDuration(_videoController.value.duration);
-      _videoController.seekTo(Duration(milliseconds: _videoController.value.duration.inMilliseconds-400));
+      _videoController.seekTo(Duration(
+          milliseconds: _videoController.value.duration.inMilliseconds - 400));
       _currentPosition = 1;
     });
   }
 
-  onDoubleTap(StateDoubleTap isStateDoubleTap){
+  onDoubleTap(StateDoubleTap isStateDoubleTap) {
     if (_stateControl != StateControl.INIT) {
       if (_timerDoubleTap != null) _timerDoubleTap.cancel();
       _stateDoubleTap = isStateDoubleTap;
@@ -831,23 +849,26 @@ Widget _renderAreaOfActionDoubleTap(){
     }
   }
 
-  refeshWidget(){
+  refeshWidget() {
     if (mounted) {
       setState(() {});
     }
   }
+
   String formatDuration(Duration position) {
-    final ms              = position.inMilliseconds;
-    int seconds           = ms ~/ 1000;
-    final int hours       = seconds ~/ 3600;
-    seconds               = seconds % 3600;
-    var minutes           = seconds ~/ 60;
-    seconds               = seconds % 60;
-    final hoursString     = hours >= 10 ? '$hours' : hours == 0 ? '00' : '0$hours';
-    final minutesString   = minutes >= 10 ? '$minutes' : minutes == 0 ? '00' : '0$minutes';
-    final secondsString   = seconds >= 10 ? '$seconds' : seconds == 0 ? '00' : '0$seconds';
-    final formattedTime   = '${hoursString == '00' ? '' : hoursString + ':'}$minutesString:$secondsString';
+    final ms = position.inMilliseconds;
+    int seconds = ms ~/ 1000;
+    final int hours = seconds ~/ 3600;
+    seconds = seconds % 3600;
+    var minutes = seconds ~/ 60;
+    seconds = seconds % 60;
+    final hoursString = hours >= 10 ? '$hours' : hours == 0 ? '00' : '0$hours';
+    final minutesString =
+        minutes >= 10 ? '$minutes' : minutes == 0 ? '00' : '0$minutes';
+    final secondsString =
+        seconds >= 10 ? '$seconds' : seconds == 0 ? '00' : '0$seconds';
+    final formattedTime =
+        '${hoursString == '00' ? '' : hoursString + ':'}$minutesString:$secondsString';
     return formattedTime;
   }
-
 }
